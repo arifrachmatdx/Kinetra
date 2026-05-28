@@ -579,15 +579,15 @@ classDiagram
         +saveSession(String userId, WorkoutSession session)
     }
 
-    AuthRepository --> UserEntity : autentikasi
-    UserEntity "1" --> "0..1" BiodataEntity : memiliki
-    UserEntity "1" --> "0..*" RiwayatEntity : memiliki
-    LatihanEntity --> DetectionScreen : dipilih untuk latihan
-    DetectionScreen --> PoseDetectorService : deteksi pose
-    DetectionScreen --> ExerciseLogic : proses gerakan
-    DetectionScreen --> WorkoutSession : membuat hasil sesi
-    WorkoutSession --> RiwayatEntity : disimpan sebagai
-    RiwayatRepository --> RiwayatEntity : simpan/baca riwayat
+    AuthRepository "1" --> "1" UserEntity : autentikasi
+    UserEntity "1" --> "1" BiodataEntity : memiliki
+    UserEntity "1" --> "*" RiwayatEntity : memiliki
+    LatihanEntity "1" --> "*" DetectionScreen : dipilih untuk latihan
+    DetectionScreen "1" --> "1" PoseDetectorService : deteksi pose
+    DetectionScreen "1" --> "1" ExerciseLogic : proses gerakan
+    DetectionScreen "1" --> "1" WorkoutSession : membuat hasil sesi
+    WorkoutSession "1" --> "1" RiwayatEntity : disimpan sebagai
+    RiwayatRepository "1" --> "*" RiwayatEntity : simpan/baca riwayat
 ```
 
 ## 4. Sequence Diagram
