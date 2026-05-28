@@ -1,57 +1,135 @@
 # Diagram UML Kinetra
 
-Dokumen ini merangkum diagram UML utama untuk proyek Kinetra. Diagram ditulis dengan Mermaid agar dapat dirender langsung oleh GitHub, GitLab, dan banyak editor Markdown.
+Dokumen ini berisi empat diagram UML utama untuk proyek Kinetra:
 
-## Ringkasan Arsitektur
+1. Use Case Diagram
+2. Activity Diagram
+3. Class Diagram
+4. Sequence Diagram
 
-Kinetra adalah aplikasi mobile Flutter untuk workout assistant dengan deteksi pose real-time. Aplikasi berjalan di perangkat pengguna, memakai Firebase Auth untuk autentikasi, Cloud Firestore untuk data aplikasi, dan Google ML Kit untuk pose detection.
+Diagram dibuat dengan Mermaid agar dapat dirender langsung di Markdown. Selain pengguna aplikasi, diagram juga melibatkan teknologi eksternal yang digunakan proyek: Google ML Kit, Firebase Authentication, dan Firebase Firestore.
 
-Struktur kode utama:
-
-- `lib/features/`: layar dan widget per fitur.
-- `lib/core/`: router, provider Riverpod, tema, konstanta, utilitas, dan widget bersama.
-- `lib/domain/`: entity dan interface repository.
-- `lib/data/`: model Firestore dan implementasi repository.
-- `lib/logic/`: strategi penghitung repetisi per latihan.
-- `lib/services/`: wrapper kamera dan pose detector.
-
-## 1. Component Diagram
+## 1. Use Case Diagram
 
 ```mermaid
 flowchart LR
-    subgraph Device["Mobile Device"]
-        subgraph App["Flutter App"]
-            Main["main.dart / KinetraApp"]
-            Features["features/*\nPresentation Screens"]
-            Core["core\nRouter, Providers, Theme, Utils"]
-            Domain["domain\nEntities + Repository Interfaces"]
-            Data["data\nFirestore Models + Repository Impl"]
-            Logic["logic\nExerciseLogic Strategies"]
-            Services["services\nCameraService + PoseDetectorService"]
-        end
+    Pengguna["<<actor>>\nPengguna"]
+    MLKit["<<actor>>\nGoogle ML Kit\nPose Detection"]
+    FirebaseAuth["<<actor>>\nFirebase Authentication"]
+    Firestore["<<actor>>\nFirebase Firestore"]
+
+    subgraph Sistem["Sistem Kinetra"]
+        UCRegister(("Registrasi Akun"))
+        UCLogin(("Login"))
+        UCLogout(("Logout"))
+        UCCompleteBiodata(("Mengisi Biodata"))
+        UCRecommendation(("Melihat Rekomendasi Latihan"))
+        UCBrowseWorkout(("Melihat Daftar Latihan"))
+        UCStartWorkout(("Memulai Sesi Workout"))
+        UCPoseDetection(("Mendeteksi Pose Real-time"))
+        UCCountRep(("Menghitung Repetisi"))
+        UCSaveHistory(("Menyimpan Riwayat Latihan"))
+        UCViewHistory(("Melihat Riwayat Latihan"))
+        UCViewProfile(("Melihat Profil"))
     end
 
-    FirebaseAuth["Firebase Auth"]
-    Firestore["Cloud Firestore"]
-    MLKit["Google ML Kit Pose Detection"]
-    Camera["Device Camera"]
+    Pengguna --> UCRegister
+    Pengguna --> UCLogin
+    Pengguna --> UCLogout
+    Pengguna --> UCCompleteBiodata
+    Pengguna --> UCRecommendation
+    Pengguna --> UCBrowseWorkout
+    Pengguna --> UCStartWorkout
+    Pengguna --> UCViewHistory
+    Pengguna --> UCViewProfile
 
-    Main --> Core
-    Core --> Features
-    Core --> Domain
-    Core --> Data
-    Features --> Core
-    Features --> Domain
-    Features --> Logic
-    Features --> Services
-    Data -. implements .-> Domain
-    Data --> FirebaseAuth
-    Data --> Firestore
-    Services --> Camera
-    Services --> MLKit
+    FirebaseAuth --> UCRegister
+    FirebaseAuth --> UCLogin
+    FirebaseAuth --> UCLogout
+
+    Firestore --> UCCompleteBiodata
+    Firestore --> UCRecommendation
+    Firestore --> UCBrowseWorkout
+    Firestore --> UCSaveHistory
+    Firestore --> UCViewHistory
+    Firestore --> UCViewProfile
+
+    MLKit --> UCPoseDetection
+
+    UCStartWorkout -. include .-> UCPoseDetection
+    UCPoseDetection -. include .-> UCCountRep
+    UCStartWorkout -. include .-> UCSaveHistory
+    UCCompleteBiodata -. enables .-> UCRecommendation
 ```
 
-## 2. Class Diagram - Domain, Repository, dan Logic
+## 2. Activity Diagram
+
+Activity diagram berikut menggambarkan alur utama aplikasi dari autentikasi sampai sesi workout selesai. Swimlane dibuat sebagai subgraph untuk menunjukkan tanggung jawab antara pengguna, aplikasi Flutter, Firebase Authentication, Firebase Firestore, dan Google ML Kit.
+
+```mermaid
+flowchart TD
+    Start([Mulai])
+
+    subgraph UserLane["Pengguna"]
+        OpenApp[Buka aplikasi]
+        SubmitAuth[Masukkan email dan password]
+        FillBiodata[Isi biodata]
+        ChooseWorkout[Pilih latihan]
+        MoveBody[Lakukan gerakan workout]
+        FinishWorkout[Tekan tombol selesai]
+        ViewResult[Lihat hasil latihan]
+    end
+
+    subgraph AppLane["Aplikasi Flutter Kinetra"]
+        InitApp[Inisialisasi Firebase dan ProviderScope]
+        CheckAuth{Status login tersedia?}
+        ShowAuth[Tampilkan Login/Register]
+        RouteGuard{Biodata lengkap?}
+        ShowBiodata[Tampilkan form biodata]
+        ShowHome[Tampilkan Home dan rekomendasi]
+        LoadWorkout[Ambil data latihan]
+        InitCamera[Inisialisasi kamera dan pose detector]
+        Countdown[Countdown 5 detik]
+        ProcessPose[Proses pose dan update UI]
+        BuildSession[Buat WorkoutSession]
+        ShowResult[Tampilkan ResultScreen]
+    end
+
+    subgraph AuthLane["Firebase Authentication"]
+        AuthState[Stream status autentikasi]
+        VerifyAccount[Validasi login/register]
+        ReturnUser[Kembalikan user UID]
+    end
+
+    subgraph FirestoreLane["Firebase Firestore"]
+        ReadUserDoc[Baca dokumen users]
+        SaveBiodata[Simpan biodata dan update users]
+        ReadLatihan[Baca koleksi latihan]
+        SaveRiwayat[Simpan riwayatLatihan]
+    end
+
+    subgraph MLKitLane["Google ML Kit"]
+        DetectPose[Deteksi landmark pose dari CameraImage]
+        ReturnPose[Kembalikan objek Pose]
+    end
+
+    Start --> OpenApp --> InitApp --> AuthState --> CheckAuth
+    CheckAuth -->|Belum login| ShowAuth --> SubmitAuth --> VerifyAccount --> ReturnUser --> ReadUserDoc
+    CheckAuth -->|Sudah login| ReadUserDoc
+    ReadUserDoc --> RouteGuard
+    RouteGuard -->|Belum lengkap| ShowBiodata --> FillBiodata --> SaveBiodata --> ShowHome
+    RouteGuard -->|Lengkap| ShowHome
+    ShowHome --> ChooseWorkout --> LoadWorkout --> ReadLatihan --> InitCamera --> Countdown
+    Countdown --> MoveBody
+    MoveBody --> DetectPose --> ReturnPose --> ProcessPose
+    ProcessPose --> MoveBody
+    MoveBody --> FinishWorkout --> BuildSession --> SaveRiwayat --> ShowResult --> ViewResult
+    ViewResult --> End([Selesai])
+```
+
+## 3. Class Diagram
+
+Class diagram ini menampilkan entity domain, repository, model Firestore, logic penghitung repetisi, service kamera/ML Kit, serta hubungan class aplikasi dengan teknologi eksternal.
 
 ```mermaid
 classDiagram
@@ -148,11 +226,40 @@ classDiagram
         +saveSession(userId, session)
     }
 
-    class AuthRepositoryImpl
-    class UserRepositoryImpl
-    class BiodataRepositoryImpl
-    class LatihanRepositoryImpl
-    class RiwayatRepositoryImpl
+    class AuthRepositoryImpl {
+        -FirebaseAuth _auth
+        -FirebaseFirestore _firestore
+        +authStateChanges()
+        +signIn(email, password)
+        +signUp(nama, email, password)
+        +signOut()
+    }
+
+    class UserRepositoryImpl {
+        -FirebaseFirestore _firestore
+        +watchUser(userId)
+        +getUser(userId)
+    }
+
+    class BiodataRepositoryImpl {
+        -FirebaseFirestore _firestore
+        +watchBiodata(userId)
+        +saveBiodata(userId, jenisKelamin, usia, targetLatihan)
+    }
+
+    class LatihanRepositoryImpl {
+        -FirebaseFirestore _firestore
+        +watchAllActive()
+        +watchByTarget(targetLatihan)
+        +getById(latihanId)
+    }
+
+    class RiwayatRepositoryImpl {
+        -FirebaseFirestore _firestore
+        +watchByUser(userId)
+        +getById(riwayatId)
+        +saveSession(userId, session)
+    }
 
     class UserModel {
         +fromFirestore(doc)
@@ -175,6 +282,33 @@ classDiagram
         +fromFirestore(doc)
         +toFirestore()
         +toEntity()
+    }
+
+    class DetectionScreen {
+        -CameraService _cameraService
+        -PoseDetectorService _poseService
+        -ExerciseLogic _logic
+        +initState()
+        +build(context)
+        -_beginWorkout()
+        -_finishWorkout()
+    }
+
+    class CameraService {
+        -CameraController _controller
+        +initialize(useFrontCamera)
+        +startImageStream(onImage)
+        +stopImageStream()
+        +dispose()
+    }
+
+    class PoseDetectorService {
+        -PoseDetector _detector
+        -bool _isProcessing
+        +initialize()
+        +processCameraImage(image, rotation, isFrontCamera)
+        +computeRotation(sensorOrientation, deviceOrientation, isFrontCamera)
+        +dispose()
     }
 
     class ExerciseLogic {
@@ -201,10 +335,36 @@ classDiagram
     class SkaterJumpLogic
     class BurpeeLogic
 
-    UserEntity "1" --> "0..1" BiodataEntity : completes
-    UserEntity "1" --> "0..*" RiwayatEntity : owns
-    LatihanEntity "1" --> "0..*" WorkoutSession : selected for
-    WorkoutSession "1" --> "0..1" RiwayatEntity : persisted as
+    class FirebaseAuth {
+        <<external>>
+        +authStateChanges()
+        +signInWithEmailAndPassword()
+        +createUserWithEmailAndPassword()
+        +signOut()
+    }
+
+    class FirebaseFirestore {
+        <<external>>
+        +collection(name)
+    }
+
+    class PoseDetector {
+        <<external ML Kit>>
+        +processImage(inputImage)
+        +close()
+    }
+
+    class CameraController {
+        <<external camera plugin>>
+        +initialize()
+        +startImageStream()
+        +stopImageStream()
+    }
+
+    UserEntity "1" --> "0..1" BiodataEntity : memiliki
+    UserEntity "1" --> "0..*" RiwayatEntity : memiliki
+    LatihanEntity "1" --> "0..*" WorkoutSession : dipilih pada
+    WorkoutSession "1" --> "0..1" RiwayatEntity : disimpan sebagai
     BiodataEntity --> TargetLatihan
 
     AuthRepositoryImpl ..|> AuthRepository
@@ -218,7 +378,21 @@ classDiagram
     LatihanModel ..> LatihanEntity : toEntity
     RiwayatModel ..> RiwayatEntity : toEntity
 
-    ExerciseLogicFactory ..> ExerciseLogic : creates
+    AuthRepositoryImpl --> FirebaseAuth
+    AuthRepositoryImpl --> FirebaseFirestore
+    UserRepositoryImpl --> FirebaseFirestore
+    BiodataRepositoryImpl --> FirebaseFirestore
+    LatihanRepositoryImpl --> FirebaseFirestore
+    RiwayatRepositoryImpl --> FirebaseFirestore
+
+    DetectionScreen --> CameraService
+    DetectionScreen --> PoseDetectorService
+    DetectionScreen --> ExerciseLogic
+    DetectionScreen --> WorkoutSession
+    CameraService --> CameraController
+    PoseDetectorService --> PoseDetector
+    ExerciseLogicFactory ..> ExerciseLogic : membuat
+
     PushUpLogic ..|> ExerciseLogic
     SquatLogic ..|> ExerciseLogic
     JumpingJackLogic ..|> ExerciseLogic
@@ -230,168 +404,93 @@ classDiagram
     BurpeeLogic ..|> ExerciseLogic
 ```
 
-## 3. Sequence Diagram - Alur Deteksi Workout
+## 4. Sequence Diagram
+
+Sequence diagram berikut menggambarkan alur lengkap dari pengguna login, aplikasi membaca data dari Firebase, pengguna menjalankan deteksi pose dengan ML Kit, lalu hasil workout disimpan ke Firestore.
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor User as Pengguna
-    participant WorkoutList as WorkoutListScreen
+    participant App as Flutter App
+    participant AuthRepo as AuthRepositoryImpl
+    participant FirebaseAuth as Firebase Authentication
+    participant Firestore as Firebase Firestore
     participant Router as GoRouter
     participant Detection as DetectionScreen
-    participant LatihanRepo as LatihanRepository
     participant Camera as CameraService
-    participant PoseService as PoseDetectorService
+    participant MLKit as Google ML Kit PoseDetector
     participant Logic as ExerciseLogic
-    participant RiwayatRepo as RiwayatRepository
-    participant Firestore as Cloud Firestore
+    participant RiwayatRepo as RiwayatRepositoryImpl
     participant Result as ResultScreen
 
-    User->>WorkoutList: Pilih latihan
-    WorkoutList->>Router: Buka /detection/:latihanId
-    Router->>Detection: Buat DetectionScreen(latihanId)
-    Detection->>LatihanRepo: getById(latihanId)
-    LatihanRepo->>Firestore: Query koleksi latihan
-    Firestore-->>LatihanRepo: Data latihan
-    LatihanRepo-->>Detection: LatihanEntity
-    Detection->>Logic: ExerciseLogicFactory.fromLatihanId(latihanId)
+    User->>App: Buka aplikasi
+    App->>AuthRepo: authStateChanges()
+    AuthRepo->>FirebaseAuth: Dengarkan status autentikasi
+    FirebaseAuth-->>AuthRepo: User? / null
+    AuthRepo-->>App: Status autentikasi
+
+    alt Belum login
+        App-->>User: Tampilkan Login/Register
+        User->>App: Submit email dan password
+        App->>AuthRepo: signIn() atau signUp()
+        AuthRepo->>FirebaseAuth: Validasi akun
+        FirebaseAuth-->>AuthRepo: UID pengguna
+        AuthRepo->>Firestore: Buat/baca dokumen users
+        Firestore-->>AuthRepo: User profile
+        AuthRepo-->>App: UserEntity
+    end
+
+    App->>Firestore: Baca users/{uid} dan biodata
+    Firestore-->>App: Status biodata
+    App->>Router: Evaluasi route guard
+
+    alt Biodata belum lengkap
+        Router-->>User: Tampilkan BiodataScreen
+        User->>App: Simpan biodata
+        App->>Firestore: Simpan biodata dan update users.isBiodataCompleted
+        Firestore-->>App: OK
+    end
+
+    Router-->>User: Tampilkan HomeScreen
+    User->>App: Pilih latihan
+    App->>Firestore: Ambil data latihan
+    Firestore-->>App: LatihanEntity
+    App->>Router: Navigasi ke /detection/:latihanId
+    Router->>Detection: Buat DetectionScreen
+
     Detection->>Camera: initialize(useFrontCamera: true)
-    Detection->>PoseService: initialize()
-    Detection->>Detection: Countdown 5 detik
-    Detection->>Camera: startImageStream(callback)
+    Camera-->>Detection: Kamera siap
+    Detection->>MLKit: Inisialisasi PoseDetector mode stream
+    MLKit-->>Detection: PoseDetector siap
+    Detection-->>User: Countdown 5 detik
+    Detection->>Camera: startImageStream()
 
     loop Setiap frame kamera
         Camera-->>Detection: CameraImage
-        Detection->>PoseService: processCameraImage(image, rotation, isFrontCamera)
-        PoseService-->>Detection: Pose?
+        Detection->>MLKit: processImage(InputImage)
+        MLKit-->>Detection: Pose?
         Detection->>Logic: processPose(pose)
         Logic-->>Detection: repCount, feedback, isPoseValid
-        Detection-->>User: Update overlay, repetisi, feedback
+        Detection-->>User: Update overlay pose, repetisi, dan feedback
     end
 
-    User->>Detection: Selesai
+    User->>Detection: Selesai workout
     Detection->>Camera: stopImageStream()
     Detection->>Detection: Buat WorkoutSession
-    opt Pengguna masih login
-        Detection->>RiwayatRepo: saveSession(userId, session)
-        RiwayatRepo->>Firestore: Set dokumen riwayatLatihan
-        Firestore-->>RiwayatRepo: OK
-    end
-    Detection->>Router: pushReplacement(/result, extra: session)
-    Router->>Result: Tampilkan hasil sesi
+    Detection->>RiwayatRepo: saveSession(userId, session)
+    RiwayatRepo->>Firestore: Simpan dokumen riwayatLatihan
+    Firestore-->>RiwayatRepo: OK
+    RiwayatRepo-->>Detection: OK
+    Detection->>Router: pushReplacement(/result, session)
+    Router->>Result: Tampilkan ResultScreen
+    Result-->>User: Hasil repetisi, durasi, kalori, feedback
 ```
 
-## 4. Activity Diagram - Guard Navigasi
+## Catatan Teknologi Eksternal
 
-```mermaid
-flowchart TD
-    Start([Aplikasi dibuka]) --> Init[Firebase initialize dan ProviderScope]
-    Init --> Splash[/SplashScreen/]
-    Splash --> AuthLoading{Auth state loading?}
-    AuthLoading -->|Ya| Splash
-    AuthLoading -->|Tidak| HasUser{User login?}
-    HasUser -->|Tidak| Login[/Login atau Register/]
-    Login --> AuthAction{Login/Register sukses?}
-    AuthAction -->|Tidak| Login
-    AuthAction -->|Ya| UserDocLoading{User doc loading?}
-    HasUser -->|Ya| UserDocLoading
-    UserDocLoading -->|Ya| Splash
-    UserDocLoading -->|Tidak| BiodataDone{Biodata lengkap?}
-    BiodataDone -->|Tidak| Biodata[/BiodataScreen/]
-    Biodata --> SaveBiodata[Simpan biodata dan update user]
-    SaveBiodata --> Home[/HomeScreen/]
-    BiodataDone -->|Ya| Home
-    Home --> AppRoutes[Home, Workouts, Detection, History, Profile]
-```
-
-## 5. State Machine Diagram - Siklus Sesi Workout
-
-```mermaid
-stateDiagram-v2
-    [*] --> LoadingExercise
-    LoadingExercise --> RequestCameraPermission
-    RequestCameraPermission --> PermissionDenied: ditolak
-    RequestCameraPermission --> InitializingCamera: diizinkan
-    PermissionDenied --> [*]
-    InitializingCamera --> Countdown: kamera dan pose detector siap
-    Countdown --> Streaming: countdown selesai
-    Streaming --> ProcessingFrame: frame kamera masuk
-    ProcessingFrame --> Streaming: repCount dan feedback diperbarui
-    Streaming --> Finishing: pengguna menekan selesai
-    Finishing --> PersistingHistory: user login
-    Finishing --> ShowingResult: user null atau save gagal
-    PersistingHistory --> ShowingResult
-    ShowingResult --> [*]
-```
-
-## 6. Deployment Diagram
-
-```mermaid
-flowchart LR
-    subgraph Phone["Perangkat Pengguna"]
-        FlutterApp["Kinetra Flutter App"]
-        CameraHardware["Camera Hardware"]
-        OnDeviceML["On-device ML Kit Pose Detector"]
-    end
-
-    subgraph Firebase["Firebase Project"]
-        Auth["Firebase Auth"]
-        DB["Cloud Firestore"]
-        Rules["Firestore Security Rules"]
-    end
-
-    subgraph Admin["Admin / Developer"]
-        SeedTool["tool/seed_latihan.dart\natau seed_latihan_admin.mjs"]
-        FirebaseConsole["Firebase Console"]
-    end
-
-    FlutterApp --> CameraHardware
-    FlutterApp --> OnDeviceML
-    FlutterApp --> Auth
-    FlutterApp --> DB
-    DB --> Rules
-    SeedTool --> DB
-    FirebaseConsole --> DB
-```
-
-## 7. Use Case Diagram
-
-```mermaid
-flowchart LR
-    Member["Pengguna"]
-
-    Register(("Register"))
-    Login(("Login"))
-    CompleteBiodata(("Lengkapi Biodata"))
-    ViewRecommendation(("Lihat Rekomendasi"))
-    BrowseWorkout(("Lihat Daftar Latihan"))
-    RunDetection(("Mulai Deteksi Pose"))
-    SaveHistory(("Simpan Riwayat"))
-    ViewHistory(("Lihat Riwayat"))
-    ViewProfile(("Lihat Profil"))
-    Logout(("Logout"))
-
-    Member --> Register
-    Member --> Login
-    Member --> CompleteBiodata
-    Member --> ViewRecommendation
-    Member --> BrowseWorkout
-    Member --> RunDetection
-    Member --> ViewHistory
-    Member --> ViewProfile
-    Member --> Logout
-
-    RunDetection --> SaveHistory
-    CompleteBiodata --> ViewRecommendation
-```
-
-## Catatan Data Firestore
-
-| Koleksi | Sumber kode | Peran |
-| --- | --- | --- |
-| `users` | `FirestoreCollections.users` | Profil dasar pengguna dan status biodata. |
-| `biodata` | `FirestoreCollections.biodata` | Data onboarding: jenis kelamin, usia, target latihan. |
-| `latihan` | `FirestoreCollections.latihan` | Katalog latihan aktif yang dibaca aplikasi. |
-| `riwayatLatihan` | `FirestoreCollections.riwayatLatihan` | Hasil sesi workout pengguna. |
-
-Aturan akses Firestore mengikuti kepemilikan `userId`: pengguna hanya dapat membaca dan mengubah dokumen miliknya sendiri, sedangkan koleksi `latihan` hanya dapat dibaca oleh pengguna terautentikasi.
+| Teknologi | Peran dalam sistem |
+| --- | --- |
+| Firebase Authentication | Mengelola registrasi, login, logout, dan status autentikasi pengguna. |
+| Firebase Firestore | Menyimpan profil pengguna, biodata, katalog latihan, dan riwayat latihan. |
+| Google ML Kit Pose Detection | Mendeteksi landmark tubuh dari frame kamera untuk dihitung oleh `ExerciseLogic`. |
