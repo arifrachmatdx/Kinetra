@@ -1,0 +1,107 @@
+// One-off seed script. Run after Firebase is configured:
+// dart run tool/seed_latihan.dart
+//
+// Requires GOOGLE_APPLICATION_CREDENTIALS or run from Firebase Admin context.
+// For development, seed manually via Firebase Console using data below.
+
+/// Firestore seed data for `latihan` collection.
+void main() {
+  const seeds = <Map<String, dynamic>>[
+    {
+      'latihanId': 'jumping_jack',
+      'namaLatihan': 'Jumping Jack',
+      'kategoriLatihan': 'Kebugaran',
+      'deskripsi': 'Latihan kardio untuk meningkatkan stamina dan koordinasi.',
+      'targetRepetisi': 20,
+      'targetDurasi': 60,
+      'targetLatihan': 'kebugaran',
+      'isActive': true,
+    },
+    {
+      'latihanId': 'high_knee',
+      'namaLatihan': 'High Knee',
+      'kategoriLatihan': 'Kebugaran',
+      'deskripsi': 'Gerakan lutut tinggi untuk mempercepat detak jantung.',
+      'targetRepetisi': 30,
+      'targetDurasi': 45,
+      'targetLatihan': 'kebugaran',
+      'isActive': true,
+    },
+    {
+      'latihanId': 'mountain_climber',
+      'namaLatihan': 'Mountain Climber',
+      'kategoriLatihan': 'Kebugaran',
+      'deskripsi': 'Latihan inti dan kardio dalam posisi plank.',
+      'targetRepetisi': 20,
+      'targetDurasi': 60,
+      'targetLatihan': 'kebugaran',
+      'isActive': true,
+    },
+    {
+      'latihanId': 'push_up',
+      'namaLatihan': 'Push Up',
+      'kategoriLatihan': 'Massa Otot',
+      'deskripsi': 'Memperkuat dada, bahu, dan lengan.',
+      'targetRepetisi': 15,
+      'targetDurasi': 90,
+      'targetLatihan': 'massaOtot',
+      'isActive': true,
+    },
+    {
+      'latihanId': 'squat',
+      'namaLatihan': 'Squat',
+      'kategoriLatihan': 'Massa Otot',
+      'deskripsi': 'Memperkuat paha, glutes, dan inti tubuh.',
+      'targetRepetisi': 15,
+      'targetDurasi': 90,
+      'targetLatihan': 'massaOtot',
+      'isActive': true,
+    },
+    {
+      'latihanId': 'sit_up',
+      'namaLatihan': 'Sit Up',
+      'kategoriLatihan': 'Massa Otot',
+      'deskripsi': 'Mengencangkan otot perut.',
+      'targetRepetisi': 20,
+      'targetDurasi': 60,
+      'targetLatihan': 'massaOtot',
+      'isActive': true,
+    },
+    {
+      'latihanId': 'lunge',
+      'namaLatihan': 'Lunge',
+      'kategoriLatihan': 'Kelincahan',
+      'deskripsi': 'Melatih keseimbangan dan kekuatan kaki.',
+      'targetRepetisi': 12,
+      'targetDurasi': 60,
+      'targetLatihan': 'kelincahan',
+      'isActive': true,
+    },
+    {
+      'latihanId': 'skater_jump',
+      'namaLatihan': 'Skater Jump',
+      'kategoriLatihan': 'Kelincahan',
+      'deskripsi': 'Gerakan lateral untuk kelincahan dan eksplosivitas.',
+      'targetRepetisi': 16,
+      'targetDurasi': 45,
+      'targetLatihan': 'kelincahan',
+      'isActive': true,
+    },
+    {
+      'latihanId': 'burpee',
+      'namaLatihan': 'Burpee',
+      'kategoriLatihan': 'Kelincahan',
+      'deskripsi': 'Latihan full-body intens untuk daya tahan.',
+      'targetRepetisi': 10,
+      'targetDurasi': 60,
+      'targetLatihan': 'kelincahan',
+      'isActive': true,
+    },
+  ];
+
+  print('Seed ${seeds.length} documents to Firestore collection "latihan":');
+  for (final doc in seeds) {
+    print('  - ${doc['latihanId']}: ${doc['namaLatihan']}');
+  }
+  print('\nImport via Firebase Console or extend this script with firebase_admin.');
+}

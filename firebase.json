@@ -1,0 +1,1 @@
+{"firestore":{"rules":"firestore.rules"},"flutter":{"platforms":{"android":{"default":{"projectId":"kinetra-513fe","appId":"1:963935721741:android:fe6e78ec321c3cca26b844","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"kinetra-513fe","configurations":{"android":"1:963935721741:android:fe6e78ec321c3cca26b844"}}}}}}

@@ -1,0 +1,100 @@
+import 'package:kinetra/domain/entities/latihan_entity.dart';
+
+/// Fallback when Firestore `latihan` collection is empty (development).
+class LocalLatihanSeed {
+  static List<LatihanEntity> all() => const [
+        LatihanEntity(
+          latihanId: 'jumping_jack',
+          namaLatihan: 'Jumping Jack',
+          kategoriLatihan: 'Kebugaran',
+          deskripsi: 'Latihan kardio untuk meningkatkan stamina.',
+          targetRepetisi: 20,
+          targetDurasi: 60,
+          targetLatihan: 'kebugaran',
+          isActive: true,
+        ),
+        LatihanEntity(
+          latihanId: 'high_knee',
+          namaLatihan: 'High Knee',
+          kategoriLatihan: 'Kebugaran',
+          deskripsi: 'Gerakan lutut tinggi untuk kardio.',
+          targetRepetisi: 30,
+          targetDurasi: 45,
+          targetLatihan: 'kebugaran',
+          isActive: true,
+        ),
+        LatihanEntity(
+          latihanId: 'mountain_climber',
+          namaLatihan: 'Mountain Climber',
+          kategoriLatihan: 'Kebugaran',
+          deskripsi: 'Latihan inti dan kardio plank.',
+          targetRepetisi: 20,
+          targetDurasi: 60,
+          targetLatihan: 'kebugaran',
+          isActive: true,
+        ),
+        LatihanEntity(
+          latihanId: 'push_up',
+          namaLatihan: 'Push Up',
+          kategoriLatihan: 'Massa Otot',
+          deskripsi: 'Memperkuat dada, bahu, dan lengan.',
+          targetRepetisi: 15,
+          targetDurasi: 90,
+          targetLatihan: 'massaOtot',
+          isActive: true,
+        ),
+        LatihanEntity(
+          latihanId: 'squat',
+          namaLatihan: 'Squat',
+          kategoriLatihan: 'Massa Otot',
+          deskripsi: 'Memperkuat paha dan glutes.',
+          targetRepetisi: 15,
+          targetDurasi: 90,
+          targetLatihan: 'massaOtot',
+          isActive: true,
+        ),
+        LatihanEntity(
+          latihanId: 'sit_up',
+          namaLatihan: 'Sit Up',
+          kategoriLatihan: 'Massa Otot',
+          deskripsi: 'Mengencangkan otot perut.',
+          targetRepetisi: 20,
+          targetDurasi: 60,
+          targetLatihan: 'massaOtot',
+          isActive: true,
+        ),
+        LatihanEntity(
+          latihanId: 'lunge',
+          namaLatihan: 'Lunge',
+          kategoriLatihan: 'Kelincahan',
+          deskripsi: 'Keseimbangan dan kekuatan kaki.',
+          targetRepetisi: 12,
+          targetDurasi: 60,
+          targetLatihan: 'kelincahan',
+          isActive: true,
+        ),
+        LatihanEntity(
+          latihanId: 'skater_jump',
+          namaLatihan: 'Skater Jump',
+          kategoriLatihan: 'Kelincahan',
+          deskripsi: 'Gerakan lateral untuk kelincahan.',
+          targetRepetisi: 16,
+          targetDurasi: 45,
+          targetLatihan: 'kelincahan',
+          isActive: true,
+        ),
+        LatihanEntity(
+          latihanId: 'burpee',
+          namaLatihan: 'Burpee',
+          kategoriLatihan: 'Kelincahan',
+          deskripsi: 'Latihan full-body intens.',
+          targetRepetisi: 10,
+          targetDurasi: 60,
+          targetLatihan: 'kelincahan',
+          isActive: true,
+        ),
+      ];
+
+  static List<LatihanEntity> byTarget(String target) =>
+      all().where((l) => l.targetLatihan == target).take(3).toList();
+}

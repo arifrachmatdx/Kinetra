@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "963935721741",
+    "project_id": "kinetra-513fe",
+    "storage_bucket": "kinetra-513fe.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:963935721741:android:fe6e78ec321c3cca26b844",
+        "android_client_info": {
+          "package_name": "com.example.kinetra"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAcyBYB4EmJJ4a4g0I6DrB9Q3rp0zngsrs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

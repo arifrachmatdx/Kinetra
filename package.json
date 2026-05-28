@@ -1,0 +1,28 @@
+{
+  "name": "kinetra",
+  "version": "1.0.0",
+  "description": "Smart workout assistant dengan deteksi pose real-time menggunakan Google ML Kit.",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arifrachmatdx/Kinetra.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/arifrachmatdx/Kinetra/issues"
+  },
+  "homepage": "https://github.com/arifrachmatdx/Kinetra#readme",
+  "dependencies": {
+    "firebase-admin": "^13.10.0"
+  }
+}
