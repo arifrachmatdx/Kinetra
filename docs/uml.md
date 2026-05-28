@@ -505,19 +505,81 @@ flowchart TD
 
 ## 3. Class Diagram
 
-Class Diagram berikut dibuat pada level konseptual agar lebih sederhana. Diagram hanya menampilkan class utama dan hubungan besarnya, sedangkan detail field dan method dijelaskan pada struktur data Firestore dan kode program.
+Class Diagram berikut tetap dibuat sederhana, tetapi sudah menyertakan variabel dengan tipe data dan fungsi utama pada setiap class inti.
 
 ```mermaid
 classDiagram
     direction LR
 
-    class Pengguna
-    class Biodata
-    class Latihan
-    class RiwayatLatihan
-    class WorkoutDetection
-    class FirebaseService
-    class MLKitService
+    class Pengguna {
+        +String userId
+        +String nama
+        +String email
+        +bool isBiodataCompleted
+        +login()
+        +register()
+        +logout()
+    }
+
+    class Biodata {
+        +String biodataId
+        +String userId
+        +String jenisKelamin
+        +int usia
+        +String targetLatihan
+        +simpanBiodata()
+    }
+
+    class Latihan {
+        +String latihanId
+        +String namaLatihan
+        +String kategoriLatihan
+        +String deskripsi
+        +int targetRepetisi
+        +int targetDurasi
+        +bool isActive
+        +getLatihanAktif()
+    }
+
+    class RiwayatLatihan {
+        +String riwayatId
+        +String userId
+        +String sesiId
+        +DateTime tanggalLatihan
+        +int hasilRepetisi
+        +int durasiLatihan
+        +double kaloriEstimasi
+        +String feedbackAkhir
+        +simpanRiwayat()
+        +lihatRiwayat()
+    }
+
+    class WorkoutDetection {
+        +String latihanId
+        +int repCount
+        +int durationSeconds
+        +String feedback
+        +bool isPoseValid
+        +mulaiLatihan()
+        +prosesGerakan()
+        +selesaiLatihan()
+    }
+
+    class FirebaseService {
+        +login(email: String, password: String)
+        +register(nama: String, email: String, password: String)
+        +logout()
+        +saveBiodata(biodata: Biodata)
+        +getLatihan()
+        +saveRiwayat(riwayat: RiwayatLatihan)
+    }
+
+    class MLKitService {
+        +bool isProcessing
+        +initialize()
+        +processCameraImage()
+        +dispose()
+    }
 
     Pengguna "1" --> "0..1" Biodata : memiliki
     Pengguna "1" --> "0..*" RiwayatLatihan : memiliki
