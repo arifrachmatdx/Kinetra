@@ -15,7 +15,8 @@ class PoseMath {
     return landmark.likelihood;
   }
 
-  static bool isVisible(PoseLandmark? landmark, {double min = 0.5}) {
+  // Default lowered to be more tolerant on mid-range devices/lighting.
+  static bool isVisible(PoseLandmark? landmark, {double min = 0.3}) {
     return landmark != null && landmark.likelihood >= min;
   }
 }

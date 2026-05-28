@@ -39,13 +39,13 @@ class SquatLogic implements ExerciseLogic {
 
     final useLeft = _preferLeftSide(pose);
     final hip = pose.landmarks[
-        useLeft ? PoseLandmarkType.leftHip : PoseLandmarkType.rightHip];
+        useLeft ? PoseLandmarkType.leftHip : PoseLandmarkType.rightHip]!;
     final knee = pose.landmarks[
-        useLeft ? PoseLandmarkType.leftKnee : PoseLandmarkType.rightKnee];
+        useLeft ? PoseLandmarkType.leftKnee : PoseLandmarkType.rightKnee]!;
     final ankle = pose.landmarks[
-        useLeft ? PoseLandmarkType.leftAnkle : PoseLandmarkType.rightAnkle];
+        useLeft ? PoseLandmarkType.leftAnkle : PoseLandmarkType.rightAnkle]!;
     final shoulder = pose.landmarks[
-        useLeft ? PoseLandmarkType.leftShoulder : PoseLandmarkType.rightShoulder];
+        useLeft ? PoseLandmarkType.leftShoulder : PoseLandmarkType.rightShoulder]!;
 
     if (!PoseMath.isVisible(hip) ||
         !PoseMath.isVisible(knee) ||
@@ -57,7 +57,7 @@ class SquatLogic implements ExerciseLogic {
     }
 
     isPoseValid = true;
-    final kneeAngle = PoseMath.angle(hip!, knee!, ankle!);
+    final kneeAngle = PoseMath.angle(hip, knee, ankle);
 
     if (kneeAngle > 155) {
       status = 'up';
@@ -83,10 +83,8 @@ class SquatLogic implements ExerciseLogic {
       status = 'idle';
     }
 
-    final shoulderLm = shoulder;
-    final hipLm = hip;
-    if (PoseMath.isVisible(shoulderLm) && PoseMath.isVisible(hipLm)) {
-      final torsoAngle = (shoulderLm!.y - hipLm!.y).abs();
+    if (PoseMath.isVisible(shoulder) && PoseMath.isVisible(hip)) {
+      final torsoAngle = (shoulder.y - hip.y).abs();
       if (torsoAngle > 80) {
         feedback = 'Posisi punggung kurang lurus';
       }

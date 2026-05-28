@@ -5,6 +5,7 @@ import 'package:kinetra/core/constants/app_routes.dart';
 import 'package:kinetra/core/providers/providers.dart';
 import 'package:kinetra/core/theme/app_colors.dart';
 import 'package:kinetra/core/utils/app_snackbar.dart';
+import 'package:kinetra/core/utils/training_target.dart';
 import 'package:kinetra/data/datasources/local_latihan_seed.dart';
 import 'package:kinetra/domain/entities/latihan_entity.dart';
 import 'package:kinetra/features/workout/widgets/latihan_card.dart';
@@ -109,10 +110,17 @@ class HomeScreen extends ConsumerWidget {
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
                   final latihan = recommendations[index];
+                  final biodata = ref.watch(biodataProvider).valueOrNull;
+                  final target = TrainingTargetCalculator.forLatihan(
+                    latihan: latihan,
+                    biodata: biodata,
+                  );
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
                     child: LatihanCard(
                       latihan: latihan,
+                      targetRepetisiOverride: target.repetisi,
+                      targetDurasiOverride: target.durasiDetik,
                       compact: true,
                       onTap: () => context.push(
                         AppRoutes.detectionPath(latihan.latihanId),

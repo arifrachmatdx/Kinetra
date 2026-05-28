@@ -7,16 +7,22 @@ class LatihanCard extends StatelessWidget {
   const LatihanCard({
     super.key,
     required this.latihan,
+    this.targetRepetisiOverride,
+    this.targetDurasiOverride,
     this.onTap,
     this.compact = false,
   });
 
   final LatihanEntity latihan;
+  final int? targetRepetisiOverride;
+  final int? targetDurasiOverride;
   final VoidCallback? onTap;
   final bool compact;
 
   @override
   Widget build(BuildContext context) {
+    final reps = targetRepetisiOverride ?? latihan.targetRepetisi;
+    final dur = targetDurasiOverride ?? latihan.targetDurasi;
     return KinetraCard(
       onTap: onTap,
       padding: EdgeInsets.all(compact ? 12 : 16),
@@ -54,7 +60,7 @@ class LatihanCard extends StatelessWidget {
                 ],
                 const SizedBox(height: 6),
                 Text(
-                  '${latihan.targetRepetisi} rep · ${latihan.targetDurasi}s',
+                  '$reps rep · ${dur}s',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: AppColors.accentCyan,
                       ),

@@ -17,11 +17,11 @@ class RiwayatRepositoryImpl implements RiwayatRepository {
     return _firestore
         .collection(FirestoreCollections.riwayatLatihan)
         .where('userId', isEqualTo: userId)
-        .orderBy('tanggalLatihan', descending: true)
         .snapshots()
         .map((snap) => snap.docs
             .map((d) => RiwayatModel.fromFirestore(d).toEntity())
-            .toList());
+            .toList()
+          ..sort((a, b) => b.tanggalLatihan.compareTo(a.tanggalLatihan)));
   }
 
   @override
