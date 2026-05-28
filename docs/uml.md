@@ -505,7 +505,7 @@ flowchart TD
 
 ## 3. Class Diagram
 
-Class diagram ini menampilkan entity domain, repository, model Firestore, logic penghitung repetisi, service kamera/ML Kit, serta hubungan class aplikasi dengan teknologi eksternal.
+Class Diagram berikut dibuat lebih sederhana agar mudah dibaca. Diagram tetap mempertahankan makna inti: data domain pengguna/latihan, repository sebagai penghubung data, proses deteksi gerakan, serta integrasi Firebase dan Google ML Kit.
 
 ```mermaid
 classDiagram
@@ -524,287 +524,113 @@ classDiagram
         +String jenisKelamin
         +int usia
         +TargetLatihan targetLatihan
-        +DateTime updatedAt
     }
 
     class LatihanEntity {
         +String latihanId
         +String namaLatihan
-        +String kategoriLatihan
-        +String deskripsi
         +int targetRepetisi
         +int targetDurasi
         +String targetLatihan
-        +bool isActive
+    }
+
+    class WorkoutSession {
+        +String sesiId
+        +String latihanId
+        +int repetitions
+        +int durationSeconds
+        +double kaloriEstimasi
     }
 
     class RiwayatEntity {
         +String riwayatId
         +String userId
         +String sesiId
-        +DateTime tanggalLatihan
-        +String namaLatihan
         +int hasilRepetisi
         +int durasiLatihan
-        +double? kaloriEstimasi
-        +String? feedbackAkhir
     }
 
-    class WorkoutSession {
-        +String sesiId
-        +String latihanId
-        +String namaLatihan
-        +int repetitions
-        +int durationSeconds
-        +String feedbackAkhir
-        +double kaloriEstimasi
-    }
-
-    class TargetLatihan {
-        <<enumeration>>
-        kebugaran
-        massaOtot
-        kelincahan
-    }
-
-    class AuthRepository {
+    class DomainRepositories {
         <<interface>>
-        +authStateChanges()
-        +currentUser
-        +signIn(email, password)
-        +signUp(nama, email, password)
-        +signOut()
+        AuthRepository
+        UserRepository
+        BiodataRepository
+        LatihanRepository
+        RiwayatRepository
     }
 
-    class UserRepository {
-        <<interface>>
-        +watchUser(userId)
-        +getUser(userId)
-    }
-
-    class BiodataRepository {
-        <<interface>>
-        +watchBiodata(userId)
-        +saveBiodata(userId, jenisKelamin, usia, targetLatihan)
-    }
-
-    class LatihanRepository {
-        <<interface>>
-        +watchAllActive()
-        +watchByTarget(targetLatihan)
-        +getById(latihanId)
-    }
-
-    class RiwayatRepository {
-        <<interface>>
-        +watchByUser(userId)
-        +getById(riwayatId)
-        +saveSession(userId, session)
-    }
-
-    class AuthRepositoryImpl {
-        -FirebaseAuth _auth
-        -FirebaseFirestore _firestore
-        +authStateChanges()
-        +signIn(email, password)
-        +signUp(nama, email, password)
-        +signOut()
-    }
-
-    class UserRepositoryImpl {
-        -FirebaseFirestore _firestore
-        +watchUser(userId)
-        +getUser(userId)
-    }
-
-    class BiodataRepositoryImpl {
-        -FirebaseFirestore _firestore
-        +watchBiodata(userId)
-        +saveBiodata(userId, jenisKelamin, usia, targetLatihan)
-    }
-
-    class LatihanRepositoryImpl {
-        -FirebaseFirestore _firestore
-        +watchAllActive()
-        +watchByTarget(targetLatihan)
-        +getById(latihanId)
-    }
-
-    class RiwayatRepositoryImpl {
-        -FirebaseFirestore _firestore
-        +watchByUser(userId)
-        +getById(riwayatId)
-        +saveSession(userId, session)
-    }
-
-    class UserModel {
-        +fromFirestore(doc)
-        +toFirestore()
-        +toEntity()
-    }
-
-    class BiodataModel {
-        +fromFirestore(doc)
-        +toFirestore()
-        +toEntity()
-    }
-
-    class LatihanModel {
-        +fromFirestore(doc)
-        +toEntity()
-    }
-
-    class RiwayatModel {
-        +fromFirestore(doc)
-        +toFirestore()
-        +toEntity()
+    class DataRepositories {
+        AuthRepositoryImpl
+        UserRepositoryImpl
+        BiodataRepositoryImpl
+        LatihanRepositoryImpl
+        RiwayatRepositoryImpl
     }
 
     class DetectionScreen {
-        -CameraService _cameraService
-        -PoseDetectorService _poseService
-        -ExerciseLogic _logic
-        +initState()
-        +build(context)
-        -_beginWorkout()
-        -_finishWorkout()
+        +latihanId
+        -beginWorkout()
+        -finishWorkout()
     }
 
     class CameraService {
-        -CameraController _controller
-        +initialize(useFrontCamera)
-        +startImageStream(onImage)
+        +initialize()
+        +startImageStream()
         +stopImageStream()
-        +dispose()
     }
 
     class PoseDetectorService {
-        -PoseDetector _detector
-        -bool _isProcessing
         +initialize()
-        +processCameraImage(image, rotation, isFrontCamera)
-        +computeRotation(sensorOrientation, deviceOrientation, isFrontCamera)
+        +processCameraImage()
         +dispose()
     }
 
     class ExerciseLogic {
         <<interface>>
-        +int repCount
-        +String feedback
-        +String status
-        +bool isPoseValid
-        +processPose(pose)
+        +repCount
+        +feedback
+        +processPose()
         +reset()
     }
 
     class ExerciseLogicFactory {
-        +fromLatihanId(latihanId)
+        +fromLatihanId()
     }
-
-    class PoseMath {
-        <<utility>>
-        +isVisible(landmark)
-        +landmarkScore(landmark)
-        +angle(a, b, c)
-    }
-
-    class CalorieEstimator {
-        <<utility>>
-        +estimate(latihanId, repetitions, durationSeconds)
-    }
-
-    class TrainingTargetCalculator {
-        <<utility>>
-        +forLatihan(latihan, biodata)
-    }
-
-    class LocalLatihanSeed {
-        <<fallback datasource>>
-        +all()
-    }
-
-    class PushUpLogic
-    class SquatLogic
-    class JumpingJackLogic
-    class HighKneeLogic
-    class MountainClimberLogic
-    class SitUpLogic
-    class LungeLogic
-    class SkaterJumpLogic
-    class BurpeeLogic
 
     class FirebaseAuth {
         <<external>>
-        +authStateChanges()
-        +signInWithEmailAndPassword()
-        +createUserWithEmailAndPassword()
-        +signOut()
     }
 
     class FirebaseFirestore {
         <<external>>
-        +collection(name)
     }
 
-    class PoseDetector {
-        <<external ML Kit>>
-        +processImage(inputImage)
-        +close()
-    }
-
-    class CameraController {
-        <<external camera plugin>>
-        +initialize()
-        +startImageStream()
-        +stopImageStream()
+    class GoogleMLKitPoseDetector {
+        <<external>>
     }
 
     UserEntity "1" --> "0..1" BiodataEntity : memiliki
     UserEntity "1" --> "0..*" RiwayatEntity : memiliki
     LatihanEntity "1" --> "0..*" WorkoutSession : dipilih pada
     WorkoutSession "1" --> "0..1" RiwayatEntity : disimpan sebagai
-    BiodataEntity --> TargetLatihan
 
-    AuthRepositoryImpl ..|> AuthRepository
-    UserRepositoryImpl ..|> UserRepository
-    BiodataRepositoryImpl ..|> BiodataRepository
-    LatihanRepositoryImpl ..|> LatihanRepository
-    RiwayatRepositoryImpl ..|> RiwayatRepository
+    DataRepositories ..|> DomainRepositories : implementasi
+    DataRepositories --> FirebaseAuth : autentikasi
+    DataRepositories --> FirebaseFirestore : baca/tulis data
+    DataRepositories --> UserEntity
+    DataRepositories --> BiodataEntity
+    DataRepositories --> LatihanEntity
+    DataRepositories --> RiwayatEntity
 
-    UserModel ..> UserEntity : toEntity
-    BiodataModel ..> BiodataEntity : toEntity
-    LatihanModel ..> LatihanEntity : toEntity
-    RiwayatModel ..> RiwayatEntity : toEntity
+    DetectionScreen --> LatihanEntity : memuat latihan
+    DetectionScreen --> CameraService : streaming kamera
+    DetectionScreen --> PoseDetectorService : deteksi pose
+    DetectionScreen --> ExerciseLogic : hitung gerakan
+    DetectionScreen --> WorkoutSession : membuat hasil sesi
+    DetectionScreen --> DataRepositories : simpan riwayat
 
-    AuthRepositoryImpl --> FirebaseAuth
-    AuthRepositoryImpl --> FirebaseFirestore
-    UserRepositoryImpl --> FirebaseFirestore
-    BiodataRepositoryImpl --> FirebaseFirestore
-    LatihanRepositoryImpl --> FirebaseFirestore
-    RiwayatRepositoryImpl --> FirebaseFirestore
-
-    DetectionScreen --> CameraService
-    DetectionScreen --> PoseDetectorService
-    DetectionScreen --> ExerciseLogic
-    DetectionScreen --> WorkoutSession
-    DetectionScreen --> CalorieEstimator : estimasi kalori
-    DetectionScreen --> TrainingTargetCalculator : target personal
-    DetectionScreen --> LocalLatihanSeed : fallback latihan
-    CameraService --> CameraController
-    PoseDetectorService --> PoseDetector
-    PoseDetectorService ..> PoseMath : data Pose dipakai logic
-    ExerciseLogicFactory ..> ExerciseLogic : membuat
-    ExerciseLogic ..> PoseMath : validasi landmark dan sudut
-
-    PushUpLogic ..|> ExerciseLogic
-    SquatLogic ..|> ExerciseLogic
-    JumpingJackLogic ..|> ExerciseLogic
-    HighKneeLogic ..|> ExerciseLogic
-    MountainClimberLogic ..|> ExerciseLogic
-    SitUpLogic ..|> ExerciseLogic
-    LungeLogic ..|> ExerciseLogic
-    SkaterJumpLogic ..|> ExerciseLogic
-    BurpeeLogic ..|> ExerciseLogic
+    PoseDetectorService --> GoogleMLKitPoseDetector : proses pose
+    ExerciseLogicFactory --> ExerciseLogic : memilih strategi
 ```
 
 ## 4. Sequence Diagram
