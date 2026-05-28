@@ -11,91 +11,66 @@ Diagram dibuat dengan Mermaid agar dapat dirender langsung di Markdown. Selain p
 
 ## 1. Use Case Diagram
 
-Use Case Diagram dibuat ringkas untuk menampilkan fungsi inti sistem. Detail seperti validasi, error handling, fallback data, dan percabangan teknis dijelaskan pada Activity Diagram dan Sequence Diagram.
+Use Case Diagram berikut menampilkan use case inti sesuai kebutuhan aplikasi Kinetra. Detail validasi, kondisi gagal, fallback data, dan percabangan teknis dijelaskan pada Activity Diagram dan Sequence Diagram.
 
 ```mermaid
 flowchart LR
     Pengguna["<<actor>>\nPengguna"]
-    MLKit["<<actor>>\nGoogle ML Kit\nPose Detection"]
     FirebaseAuth["<<actor>>\nFirebase Authentication"]
     Firestore["<<actor>>\nFirebase Firestore"]
+    MLKit["<<actor>>\nGoogle ML Kit\nPose Detection"]
 
     subgraph Sistem["Sistem Kinetra"]
-        UCAuth(("Autentikasi Akun"))
+        UCLogin(("Login"))
+        UCRegister(("Register"))
+        UCLogout(("Logout"))
         UCBiodata(("Mengisi Biodata"))
-        UCWorkoutCatalog(("Melihat dan Memilih Latihan"))
-        UCWorkoutSession(("Menjalankan Sesi Workout"))
+        UCProfile(("Melihat Profil"))
+        UCRecommendation(("Melihat Rekomendasi Latihan"))
+        UCChooseWorkout(("Memilih Latihan"))
+        UCStartWorkout(("Memulai Latihan"))
+        UCDetectMovement(("Mendeteksi Gerakan"))
         UCResult(("Melihat Hasil Latihan"))
         UCHistory(("Melihat Riwayat Latihan"))
-        UCProfile(("Melihat Profil"))
     end
 
-    Pengguna --> UCAuth
+    Pengguna --> UCLogin
+    Pengguna --> UCRegister
+    Pengguna --> UCLogout
     Pengguna --> UCBiodata
-    Pengguna --> UCWorkoutCatalog
-    Pengguna --> UCWorkoutSession
+    Pengguna --> UCProfile
+    Pengguna --> UCRecommendation
+    Pengguna --> UCChooseWorkout
+    Pengguna --> UCStartWorkout
+    Pengguna --> UCDetectMovement
     Pengguna --> UCResult
     Pengguna --> UCHistory
-    Pengguna --> UCProfile
 
-    FirebaseAuth --> UCAuth
+    FirebaseAuth --> UCLogin
+    FirebaseAuth --> UCRegister
+    FirebaseAuth --> UCLogout
+
     Firestore --> UCBiodata
-    Firestore --> UCWorkoutCatalog
-    Firestore --> UCWorkoutSession
-    Firestore --> UCHistory
     Firestore --> UCProfile
-    MLKit --> UCWorkoutSession
+    Firestore --> UCRecommendation
+    Firestore --> UCChooseWorkout
+    Firestore --> UCResult
+    Firestore --> UCHistory
 
-    UCWorkoutCatalog --> UCWorkoutSession
-    UCWorkoutSession --> UCResult
+    MLKit --> UCDetectMovement
+
+    UCRecommendation --> UCChooseWorkout
+    UCChooseWorkout --> UCStartWorkout
+    UCStartWorkout --> UCDetectMovement
+    UCDetectMovement --> UCResult
     UCResult --> UCHistory
 ```
 
 ## 2. Activity Diagram
 
-Activity diagram berikut tetap dibuat rinci per alur turunan dari use case inti agar proses sistem mudah ditelusuri. Decision node ditulis dengan bentuk diamond `{...}` untuk memperjelas kondisi berhasil/gagal, data tersedia/tidak tersedia, dan loop proses yang terjadi.
+Activity Diagram berikut disesuaikan dengan 11 use case pada Use Case Diagram. Decision node ditulis dengan bentuk diamond `{...}` untuk memperjelas kondisi berhasil/gagal, data tersedia/tidak tersedia, izin kamera, dan loop proses deteksi gerakan.
 
-### 2.1 Activity Diagram - Registrasi Akun
-
-```mermaid
-flowchart TD
-    Start([Mulai])
-    subgraph User["Pengguna"]
-        OpenRegister[Buka halaman Register]
-        FillRegister[Isi nama, email, dan password]
-        SubmitRegister[Kirim form register]
-        FixInput[Perbaiki input]
-        ReceiveResult[Terima status registrasi]
-    end
-    subgraph App["Aplikasi Flutter Kinetra"]
-        ValidateInput{Input lengkap dan valid?}
-        CallSignUp[Panggil AuthRepository.signUp]
-        AuthSuccess{Registrasi Firebase berhasil?}
-        CreateUserModel[Buat UserModel dengan biodata belum lengkap]
-        FirestoreSuccess{User profile tersimpan?}
-        RedirectBiodata[Arahkan ke BiodataScreen]
-        ShowValidationError[Tampilkan error validasi]
-        ShowAuthError[Tampilkan error autentikasi]
-        ShowFirestoreError[Tampilkan error penyimpanan profil]
-    end
-    subgraph Auth["Firebase Authentication"]
-        CreateCredential[Buat akun email/password]
-        ReturnUid[Kembalikan UID pengguna]
-    end
-    subgraph DB["Firebase Firestore"]
-        SaveUser[Simpan dokumen users/uid]
-    end
-
-    Start --> OpenRegister --> FillRegister --> SubmitRegister --> ValidateInput
-    ValidateInput -->|Tidak| ShowValidationError --> FixInput --> FillRegister
-    ValidateInput -->|Ya| CallSignUp --> CreateCredential --> AuthSuccess
-    AuthSuccess -->|Tidak| ShowAuthError --> ReceiveResult --> End([Selesai])
-    AuthSuccess -->|Ya| ReturnUid --> CreateUserModel --> SaveUser --> FirestoreSuccess
-    FirestoreSuccess -->|Tidak| ShowFirestoreError --> ReceiveResult --> End
-    FirestoreSuccess -->|Ya| RedirectBiodata --> ReceiveResult --> End
-```
-
-### 2.2 Activity Diagram - Login
+### 2.1 Activity Diagram - Login
 
 ```mermaid
 flowchart TD
@@ -103,40 +78,80 @@ flowchart TD
     subgraph User["Pengguna"]
         OpenLogin[Buka halaman Login]
         FillLogin[Isi email dan password]
-        SubmitLogin[Kirim form login]
-        RetryLogin[Perbaiki kredensial]
-        ReceiveResult[Terima status login]
+        SubmitLogin[Tekan tombol Login]
+        FixCredential[Perbaiki email/password]
+        ReceiveLoginResult[Terima hasil login]
     end
     subgraph App["Aplikasi Flutter Kinetra"]
         ValidateInput{Input valid?}
         CallSignIn[Panggil AuthRepository.signIn]
         LoginSuccess{Login Firebase berhasil?}
-        UserDocExists{Dokumen users ada?}
-        CreateDefaultUser[Buat dokumen users default]
-        CheckBiodata{Biodata lengkap?}
+        UserDocExists{Dokumen users tersedia?}
+        CreateDefaultUser[Buat profil default]
+        BiodataComplete{Biodata lengkap?}
         GoBiodata[Arahkan ke BiodataScreen]
         GoHome[Arahkan ke HomeScreen]
         ShowValidationError[Tampilkan error validasi]
-        ShowAuthError[Tampilkan error login]
+        ShowLoginError[Tampilkan error login]
     end
     subgraph Auth["Firebase Authentication"]
         VerifyCredential[Validasi email/password]
-        ReturnAuthState[Kembalikan UID pengguna]
+        ReturnUid[Kembalikan UID pengguna]
     end
     subgraph DB["Firebase Firestore"]
-        ReadUser[Baca dokumen users/uid]
-        SaveDefaultUser[Simpan profil default jika belum ada]
+        ReadUser[Baca users/uid]
+        SaveDefaultUser[Simpan profil default]
     end
 
     Start --> OpenLogin --> FillLogin --> SubmitLogin --> ValidateInput
-    ValidateInput -->|Tidak| ShowValidationError --> RetryLogin --> FillLogin
+    ValidateInput -->|Tidak| ShowValidationError --> FixCredential --> FillLogin
     ValidateInput -->|Ya| CallSignIn --> VerifyCredential --> LoginSuccess
-    LoginSuccess -->|Tidak| ShowAuthError --> RetryLogin --> FillLogin
-    LoginSuccess -->|Ya| ReturnAuthState --> ReadUser --> UserDocExists
-    UserDocExists -->|Tidak| CreateDefaultUser --> SaveDefaultUser --> CheckBiodata
-    UserDocExists -->|Ya| CheckBiodata
-    CheckBiodata -->|Belum| GoBiodata --> ReceiveResult --> End([Selesai])
-    CheckBiodata -->|Sudah| GoHome --> ReceiveResult --> End
+    LoginSuccess -->|Tidak| ShowLoginError --> FixCredential --> FillLogin
+    LoginSuccess -->|Ya| ReturnUid --> ReadUser --> UserDocExists
+    UserDocExists -->|Tidak| CreateDefaultUser --> SaveDefaultUser --> BiodataComplete
+    UserDocExists -->|Ya| BiodataComplete
+    BiodataComplete -->|Tidak| GoBiodata --> ReceiveLoginResult --> End([Selesai])
+    BiodataComplete -->|Ya| GoHome --> ReceiveLoginResult --> End
+```
+
+### 2.2 Activity Diagram - Register
+
+```mermaid
+flowchart TD
+    Start([Mulai])
+    subgraph User["Pengguna"]
+        OpenRegister[Buka halaman Register]
+        FillRegister[Isi nama, email, dan password]
+        SubmitRegister[Tekan tombol Register]
+        FixInput[Perbaiki data register]
+        ReceiveRegisterResult[Terima hasil register]
+    end
+    subgraph App["Aplikasi Flutter Kinetra"]
+        ValidateRegister{Input register valid?}
+        CallSignUp[Panggil AuthRepository.signUp]
+        RegisterSuccess{Registrasi Firebase berhasil?}
+        BuildUserModel[Buat UserModel dengan biodata belum lengkap]
+        SaveUserSuccess{Profil tersimpan di Firestore?}
+        GoBiodata[Arahkan ke BiodataScreen]
+        ShowValidationError[Tampilkan error validasi]
+        ShowRegisterError[Tampilkan error register]
+        ShowSaveError[Tampilkan error simpan profil]
+    end
+    subgraph Auth["Firebase Authentication"]
+        CreateAccount[Buat akun email/password]
+        ReturnUid[Kembalikan UID pengguna]
+    end
+    subgraph DB["Firebase Firestore"]
+        SaveUser[Simpan dokumen users/uid]
+    end
+
+    Start --> OpenRegister --> FillRegister --> SubmitRegister --> ValidateRegister
+    ValidateRegister -->|Tidak| ShowValidationError --> FixInput --> FillRegister
+    ValidateRegister -->|Ya| CallSignUp --> CreateAccount --> RegisterSuccess
+    RegisterSuccess -->|Tidak| ShowRegisterError --> FixInput --> FillRegister
+    RegisterSuccess -->|Ya| ReturnUid --> BuildUserModel --> SaveUser --> SaveUserSuccess
+    SaveUserSuccess -->|Tidak| ShowSaveError --> ReceiveRegisterResult --> End([Selesai])
+    SaveUserSuccess -->|Ya| GoBiodata --> ReceiveRegisterResult --> End
 ```
 
 ### 2.3 Activity Diagram - Logout
@@ -147,13 +162,13 @@ flowchart TD
     subgraph User["Pengguna"]
         OpenProfile[Buka halaman Profil]
         TapLogout[Tekan tombol Logout]
-        ConfirmDecision{Yakin logout?}
+        ConfirmLogout{Yakin logout?}
     end
     subgraph App["Aplikasi Flutter Kinetra"]
         StayProfile[Tetap di ProfileScreen]
         CallSignOut[Panggil AuthRepository.signOut]
-        SignOutSuccess{Logout berhasil?}
-        ClearRouteState[Perbarui authState dan route guard]
+        LogoutSuccess{Logout berhasil?}
+        ClearState[Perbarui authState dan route guard]
         GoLogin[Arahkan ke LoginScreen]
         ShowLogoutError[Tampilkan error logout]
     end
@@ -162,11 +177,11 @@ flowchart TD
         EmitNull[Emit authState null]
     end
 
-    Start --> OpenProfile --> TapLogout --> ConfirmDecision
-    ConfirmDecision -->|Tidak| StayProfile --> End([Selesai])
-    ConfirmDecision -->|Ya| CallSignOut --> EndSession --> SignOutSuccess
-    SignOutSuccess -->|Tidak| ShowLogoutError --> StayProfile --> End
-    SignOutSuccess -->|Ya| EmitNull --> ClearRouteState --> GoLogin --> End
+    Start --> OpenProfile --> TapLogout --> ConfirmLogout
+    ConfirmLogout -->|Tidak| StayProfile --> End([Selesai])
+    ConfirmLogout -->|Ya| CallSignOut --> EndSession --> LogoutSuccess
+    LogoutSuccess -->|Tidak| ShowLogoutError --> StayProfile --> End
+    LogoutSuccess -->|Ya| EmitNull --> ClearState --> GoLogin --> End
 ```
 
 ### 2.4 Activity Diagram - Mengisi Biodata
@@ -177,17 +192,16 @@ flowchart TD
     subgraph User["Pengguna"]
         OpenBiodata[Buka BiodataScreen]
         FillBiodata[Isi jenis kelamin, usia, dan target latihan]
-        SubmitBiodata[Simpan biodata]
+        SubmitBiodata[Tekan Simpan]
         FixBiodata[Perbaiki biodata]
     end
     subgraph App["Aplikasi Flutter Kinetra"]
-        ValidateBiodata{Form valid?}
-        AgeValid{Usia masuk rentang valid?}
+        ValidateBiodata{Form biodata valid?}
+        AgeValid{Usia valid?}
         TargetSelected{Target latihan dipilih?}
         CallSave[Panggil BiodataRepository.saveBiodata]
-        SaveSuccess{Simpan ke Firestore berhasil?}
+        SaveSuccess{Simpan Firestore berhasil?}
         RefreshUserDoc[Refresh currentUserDocProvider]
-        RouteAllowed{Route guard mengizinkan ke Home?}
         GoHome[Arahkan ke HomeScreen]
         ShowError[Tampilkan pesan error]
     end
@@ -204,12 +218,48 @@ flowchart TD
     TargetSelected -->|Tidak| ShowError --> FixBiodata
     TargetSelected -->|Ya| CallSave --> WriteBiodata --> UpdateUser --> SaveSuccess
     SaveSuccess -->|Tidak| ShowError --> FixBiodata
-    SaveSuccess -->|Ya| RefreshUserDoc --> RouteAllowed
-    RouteAllowed -->|Ya| GoHome --> End([Selesai])
-    RouteAllowed -->|Tidak| ShowError --> End
+    SaveSuccess -->|Ya| RefreshUserDoc --> GoHome --> End([Selesai])
 ```
 
-### 2.5 Activity Diagram - Melihat Rekomendasi Latihan
+### 2.5 Activity Diagram - Melihat Profil
+
+```mermaid
+flowchart TD
+    Start([Mulai])
+    subgraph User["Pengguna"]
+        OpenProfile[Buka ProfileScreen]
+        ViewProfile[Lihat nama, email, dan biodata]
+        CompleteBiodata[Pilih lengkapi biodata]
+    end
+    subgraph App["Aplikasi Flutter Kinetra"]
+        CurrentUserAvailable{currentUser tersedia?}
+        WatchUser[Watch currentUserDocProvider]
+        UserDocAvailable{Dokumen user tersedia?}
+        WatchBiodata[Watch biodataProvider]
+        BiodataAvailable{Biodata tersedia?}
+        RenderFullProfile[Tampilkan profil lengkap]
+        RenderPartialProfile[Tampilkan profil tanpa biodata]
+        RedirectLogin[Arahkan ke LoginScreen]
+        ShowProfileError[Tampilkan error profil]
+    end
+    subgraph Auth["Firebase Authentication"]
+        ProvideUid[Menyediakan UID pengguna]
+    end
+    subgraph DB["Firebase Firestore"]
+        ReadUser[Baca dokumen users]
+        ReadBiodata[Baca dokumen biodata]
+    end
+
+    Start --> OpenProfile --> ProvideUid --> CurrentUserAvailable
+    CurrentUserAvailable -->|Tidak| RedirectLogin --> End([Selesai])
+    CurrentUserAvailable -->|Ya| WatchUser --> ReadUser --> UserDocAvailable
+    UserDocAvailable -->|Tidak| ShowProfileError --> End
+    UserDocAvailable -->|Ya| WatchBiodata --> ReadBiodata --> BiodataAvailable
+    BiodataAvailable -->|Ya| RenderFullProfile --> ViewProfile --> End
+    BiodataAvailable -->|Tidak| RenderPartialProfile --> CompleteBiodata --> End
+```
+
+### 2.6 Activity Diagram - Melihat Rekomendasi Latihan
 
 ```mermaid
 flowchart TD
@@ -217,85 +267,83 @@ flowchart TD
     subgraph User["Pengguna"]
         OpenHome[Buka HomeScreen]
         ViewRecommendation[Lihat rekomendasi latihan]
-        SelectRecommendation[Pilih latihan rekomendasi]
     end
     subgraph App["Aplikasi Flutter Kinetra"]
         WatchBiodata[Watch biodataProvider]
         BiodataAvailable{Biodata tersedia?}
-        UseDefaultTarget[Gunakan semua latihan aktif]
         ReadTarget[Ambil targetLatihan]
         WatchRecommendation[Watch recommendationProvider]
-        RecommendationAvailable{Rekomendasi dari Firestore ada?}
-        UseFallback[Gunakan LocalLatihanSeed]
-        RenderCards[Tampilkan kartu rekomendasi]
-        GoDetection[Arahkan ke DetectionScreen]
+        RecommendationAvailable{Data rekomendasi tersedia?}
+        UseAllActive[Gunakan semua latihan aktif]
+        UseLocalSeed[Gunakan LocalLatihanSeed]
+        RenderRecommendation[Tampilkan kartu rekomendasi]
     end
     subgraph DB["Firebase Firestore"]
         ReadBiodata[Baca koleksi biodata]
-        QueryLatihan[Query latihan berdasarkan targetLatihan]
+        QueryByTarget[Query latihan by targetLatihan]
         QueryAllActive[Query semua latihan aktif]
     end
 
     Start --> OpenHome --> WatchBiodata --> ReadBiodata --> BiodataAvailable
-    BiodataAvailable -->|Tidak| UseDefaultTarget --> QueryAllActive --> RecommendationAvailable
-    BiodataAvailable -->|Ya| ReadTarget --> WatchRecommendation --> QueryLatihan --> RecommendationAvailable
-    RecommendationAvailable -->|Tidak| UseFallback --> RenderCards
-    RecommendationAvailable -->|Ya| RenderCards
-    RenderCards --> ViewRecommendation --> SelectRecommendation --> GoDetection --> End([Selesai])
+    BiodataAvailable -->|Ya| ReadTarget --> WatchRecommendation --> QueryByTarget --> RecommendationAvailable
+    BiodataAvailable -->|Tidak| UseAllActive --> QueryAllActive --> RecommendationAvailable
+    RecommendationAvailable -->|Ya| RenderRecommendation --> ViewRecommendation --> End([Selesai])
+    RecommendationAvailable -->|Tidak| UseLocalSeed --> RenderRecommendation --> ViewRecommendation --> End
 ```
 
-### 2.6 Activity Diagram - Melihat Daftar Latihan
+### 2.7 Activity Diagram - Memilih Latihan
 
 ```mermaid
 flowchart TD
     Start([Mulai])
     subgraph User["Pengguna"]
-        OpenWorkoutList[Buka WorkoutListScreen]
-        BrowseList[Lihat daftar latihan]
-        SelectWorkout[Pilih salah satu latihan]
-        RetryLoad[Tarik ulang / buka ulang daftar]
+        OpenWorkoutList[Buka daftar latihan atau rekomendasi]
+        BrowseWorkout[Lihat pilihan latihan]
+        SelectWorkout[Pilih latihan]
+        RetryLoad[Muat ulang daftar]
     end
     subgraph App["Aplikasi Flutter Kinetra"]
-        WatchLatihan[Watch latihanListProvider]
-        LatihanState{Status data latihan?}
+        LoadWorkoutList[Muat latihanListProvider]
+        WorkoutState{Status data latihan?}
         RenderLoading[Tampilkan loading]
-        RenderWorkoutList[Tampilkan daftar latihan aktif]
-        EmptyList{Daftar kosong?}
-        UseFallback[Gunakan LocalLatihanSeed]
-        RenderEmpty[Tampilkan state kosong]
-        GoDetection[Arahkan ke DetectionScreen]
+        ListEmpty{Daftar latihan kosong?}
+        UseLocalSeed[Gunakan LocalLatihanSeed]
+        RenderWorkoutList[Tampilkan daftar latihan]
+        StoreSelectedWorkout[Simpan latihanId terpilih]
+        GoStartWorkout[Arahkan ke halaman memulai latihan]
+        ShowError[Tampilkan error]
     end
     subgraph DB["Firebase Firestore"]
-        QueryActiveLatihan[Query koleksi latihan where isActive true]
+        QueryWorkout[Query latihan aktif]
     end
 
-    Start --> OpenWorkoutList --> WatchLatihan --> QueryActiveLatihan --> LatihanState
-    LatihanState -->|Loading| RenderLoading --> WatchLatihan
-    LatihanState -->|Error| UseFallback --> EmptyList
-    LatihanState -->|Data| EmptyList
-    EmptyList -->|Ya| UseFallback --> RenderWorkoutList
-    EmptyList -->|Tetap kosong| RenderEmpty --> RetryLoad --> WatchLatihan
-    EmptyList -->|Tidak| RenderWorkoutList --> BrowseList --> SelectWorkout --> GoDetection --> End([Selesai])
+    Start --> OpenWorkoutList --> LoadWorkoutList --> QueryWorkout --> WorkoutState
+    WorkoutState -->|Loading| RenderLoading --> LoadWorkoutList
+    WorkoutState -->|Error| ShowError --> RetryLoad --> LoadWorkoutList
+    WorkoutState -->|Data| ListEmpty
+    ListEmpty -->|Ya| UseLocalSeed --> RenderWorkoutList
+    ListEmpty -->|Tidak| RenderWorkoutList
+    RenderWorkoutList --> BrowseWorkout --> SelectWorkout --> StoreSelectedWorkout --> GoStartWorkout --> End([Selesai])
 ```
 
-### 2.7 Activity Diagram - Memulai Sesi Workout
+### 2.8 Activity Diagram - Memulai Latihan
 
 ```mermaid
 flowchart TD
     Start([Mulai])
     subgraph User["Pengguna"]
-        ChooseWorkout[Pilih latihan]
+        EnterDetection[Buka halaman latihan]
         PermissionDecision{Izin kamera diberikan?}
         OpenSettings[Buka pengaturan aplikasi]
         WaitCountdown[Tunggu countdown]
         StartMoving[Mulai bergerak]
     end
     subgraph App["Aplikasi Flutter Kinetra"]
-        LoadLatihan[Ambil detail latihan]
-        LatihanFound{Data latihan ditemukan?}
-        UseLocalLatihan[Gunakan LocalLatihanSeed]
+        LoadWorkoutDetail[Ambil detail latihan]
+        WorkoutFound{Latihan ditemukan?}
+        UseLocalWorkout[Gunakan LocalLatihanSeed]
         CalculateTarget[Hitung target personal]
-        RequestCameraPermission[Minta izin kamera]
+        RequestPermission[Minta izin kamera]
         InitCamera[Inisialisasi CameraService]
         CameraReady{Kamera siap?}
         InitPoseDetector[Inisialisasi PoseDetectorService]
@@ -303,22 +351,22 @@ flowchart TD
         CreateLogic[Buat ExerciseLogic sesuai latihanId]
         StartCountdown[Mulai countdown 5 detik]
         CountdownDone{Countdown selesai?}
-        StartImageStream[Mulai image stream kamera]
+        StartStream[Mulai image stream]
         ShowPermissionError[Tampilkan error izin kamera]
         ShowInitError[Tampilkan error inisialisasi]
     end
     subgraph DB["Firebase Firestore"]
-        ReadLatihan[Baca data latihan]
+        ReadWorkout[Baca data latihan]
         ReadBiodata[Baca biodata pengguna]
     end
     subgraph MLKit["Google ML Kit"]
         PrepareDetector[Siapkan PoseDetector mode stream]
     end
 
-    Start --> ChooseWorkout --> LoadLatihan --> ReadLatihan --> LatihanFound
-    LatihanFound -->|Tidak| UseLocalLatihan --> ReadBiodata
-    LatihanFound -->|Ya| ReadBiodata
-    ReadBiodata --> CalculateTarget --> RequestCameraPermission --> PermissionDecision
+    Start --> EnterDetection --> LoadWorkoutDetail --> ReadWorkout --> WorkoutFound
+    WorkoutFound -->|Tidak| UseLocalWorkout --> ReadBiodata
+    WorkoutFound -->|Ya| ReadBiodata
+    ReadBiodata --> CalculateTarget --> RequestPermission --> PermissionDecision
     PermissionDecision -->|Tidak| ShowPermissionError --> OpenSettings --> End([Selesai])
     PermissionDecision -->|Ya| InitCamera --> CameraReady
     CameraReady -->|Tidak| ShowInitError --> End
@@ -326,124 +374,94 @@ flowchart TD
     DetectorReady -->|Tidak| ShowInitError --> End
     DetectorReady -->|Ya| CreateLogic --> StartCountdown --> WaitCountdown --> CountdownDone
     CountdownDone -->|Tidak| StartCountdown
-    CountdownDone -->|Ya| StartImageStream --> StartMoving --> End
+    CountdownDone -->|Ya| StartStream --> StartMoving --> End
 ```
 
-### 2.8 Activity Diagram - Mendeteksi Pose Real-time
+### 2.9 Activity Diagram - Mendeteksi Gerakan
 
 ```mermaid
 flowchart TD
     Start([Mulai])
     subgraph User["Pengguna"]
         MoveBody[Lakukan gerakan di depan kamera]
-        AdjustPosition[Atur posisi tubuh/kamera]
-        SeeOverlay[Lihat skeleton overlay dan validasi pose]
+        AdjustPose[Perbaiki posisi tubuh]
+        SeeFeedback[Lihat overlay, repetisi, dan feedback]
     end
     subgraph App["Aplikasi Flutter Kinetra"]
         ReceiveFrame[Terima CameraImage]
-        IsWorkoutStarted{Workout sedang berjalan?}
-        IsProcessing{Frame sebelumnya masih diproses?}
+        WorkoutRunning{Workout masih berjalan?}
+        ProcessingBusy{Frame lain sedang diproses?}
         ThrottleOk{Jarak frame minimal 80 ms?}
-        ComputeRotation[Hitung rotasi frame]
-        ConvertImage[Konversi CameraImage ke InputImage]
+        ComputeRotation[Hitung rotasi kamera]
+        ConvertInput[Konversi CameraImage ke InputImage]
         ConversionOk{Konversi berhasil?}
-        UpdatePoseNotifier[Update pose notifier]
+        ProcessPoseResult[Terima Pose dari ML Kit]
+        PoseAvailable{Pose terdeteksi?}
+        LandmarksVisible{Landmark wajib terlihat?}
+        CalculateAngle[Hitung sudut dengan PoseMath]
+        ValidRep{Gerakan membentuk repetisi valid?}
+        IncrementRep[Tambah repCount]
+        UpdateFeedback[Update feedback dan status]
         RenderOverlay[Render PosePainter]
         SkipFrame[Lewati frame]
     end
     subgraph MLKit["Google ML Kit"]
-        ProcessImage[Proses InputImage]
-        PoseDetected{Pose terdeteksi?}
-        ReturnPose[Kembalikan objek Pose]
+        DetectPose[Proses InputImage]
+        ReturnPose[Kembalikan Pose]
     end
 
-    Start --> MoveBody --> ReceiveFrame --> IsWorkoutStarted
-    IsWorkoutStarted -->|Tidak| SkipFrame --> End([Selesai])
-    IsWorkoutStarted -->|Ya| IsProcessing
-    IsProcessing -->|Ya| SkipFrame --> ReceiveFrame
-    IsProcessing -->|Tidak| ThrottleOk
+    Start --> MoveBody --> ReceiveFrame --> WorkoutRunning
+    WorkoutRunning -->|Tidak| End([Selesai])
+    WorkoutRunning -->|Ya| ProcessingBusy
+    ProcessingBusy -->|Ya| SkipFrame --> ReceiveFrame
+    ProcessingBusy -->|Tidak| ThrottleOk
     ThrottleOk -->|Tidak| SkipFrame --> ReceiveFrame
-    ThrottleOk -->|Ya| ComputeRotation --> ConvertImage --> ConversionOk
-    ConversionOk -->|Tidak| SkipFrame --> AdjustPosition --> MoveBody
-    ConversionOk -->|Ya| ProcessImage --> PoseDetected
-    PoseDetected -->|Tidak| UpdatePoseNotifier --> AdjustPosition --> MoveBody
-    PoseDetected -->|Ya| ReturnPose --> UpdatePoseNotifier --> RenderOverlay --> SeeOverlay --> ReceiveFrame
+    ThrottleOk -->|Ya| ComputeRotation --> ConvertInput --> ConversionOk
+    ConversionOk -->|Tidak| UpdateFeedback --> AdjustPose --> MoveBody
+    ConversionOk -->|Ya| DetectPose --> ReturnPose --> ProcessPoseResult --> PoseAvailable
+    PoseAvailable -->|Tidak| UpdateFeedback --> AdjustPose --> MoveBody
+    PoseAvailable -->|Ya| LandmarksVisible
+    LandmarksVisible -->|Tidak| UpdateFeedback --> AdjustPose --> MoveBody
+    LandmarksVisible -->|Ya| CalculateAngle --> ValidRep
+    ValidRep -->|Ya| IncrementRep --> UpdateFeedback --> RenderOverlay --> SeeFeedback --> ReceiveFrame
+    ValidRep -->|Tidak| UpdateFeedback --> RenderOverlay --> SeeFeedback --> ReceiveFrame
 ```
 
-### 2.9 Activity Diagram - Menghitung Repetisi
-
-```mermaid
-flowchart TD
-    Start([Mulai])
-    subgraph MLKit["Google ML Kit"]
-        ProvidePose[Memberikan objek Pose]
-    end
-    subgraph App["Aplikasi Flutter Kinetra"]
-        ReceivePose[Terima Pose dari PoseDetectorService]
-        PoseNull{Pose null?}
-        ChooseLogic[Gunakan ExerciseLogic aktif]
-        ValidateLandmark{Landmark wajib terlihat?}
-        CalculateAngle[Hitung sudut gerakan dengan PoseMath]
-        PhaseChanged{Fase gerakan berubah valid?}
-        CooldownPassed{Jeda repetisi terpenuhi?}
-        IncrementRep[Tambah repCount]
-        UpdateFeedback[Update feedback dan status]
-        MarkInvalid[Set isPoseValid false]
-        ShowStats[Tampilkan repetisi dan feedback]
-    end
-    subgraph User["Pengguna"]
-        ContinueMovement[Lanjutkan gerakan]
-        CorrectPose[Perbaiki posisi tubuh]
-        SeeStats[Lihat jumlah repetisi]
-    end
-
-    Start --> ProvidePose --> ReceivePose --> PoseNull
-    PoseNull -->|Ya| MarkInvalid --> UpdateFeedback --> CorrectPose --> ContinueMovement --> End([Selesai])
-    PoseNull -->|Tidak| ChooseLogic --> ValidateLandmark
-    ValidateLandmark -->|Tidak| MarkInvalid --> UpdateFeedback --> CorrectPose --> ContinueMovement --> End
-    ValidateLandmark -->|Ya| CalculateAngle --> PhaseChanged
-    PhaseChanged -->|Tidak| UpdateFeedback --> ShowStats --> ContinueMovement --> End
-    PhaseChanged -->|Ya| CooldownPassed
-    CooldownPassed -->|Tidak| UpdateFeedback --> ShowStats --> ContinueMovement --> End
-    CooldownPassed -->|Ya| IncrementRep --> UpdateFeedback --> ShowStats --> SeeStats --> ContinueMovement --> End
-```
-
-### 2.10 Activity Diagram - Menyimpan Riwayat Latihan
+### 2.10 Activity Diagram - Melihat Hasil Latihan
 
 ```mermaid
 flowchart TD
     Start([Mulai])
     subgraph User["Pengguna"]
-        FinishWorkout[Tekan selesai workout]
-        SeeResult[Lihat hasil latihan]
+        TapFinish[Tekan tombol selesai]
+        ViewResult[Lihat hasil repetisi, durasi, kalori, dan feedback]
     end
     subgraph App["Aplikasi Flutter Kinetra"]
-        StopStream[Stop image stream]
-        StreamStopped{Stream kamera berhenti?}
-        StopStopwatch[Stop stopwatch]
+        StopStream[Hentikan image stream]
+        StreamStopped{Stream berhenti?}
+        StopTimer[Stop stopwatch]
         BuildSession[Buat WorkoutSession]
-        HasReps{Repetisi lebih dari 0?}
         EstimateCalories[Hitung estimasi kalori]
-        CheckUser{User login?}
-        SaveSession[Panggil RiwayatRepository.saveSession]
-        SaveSuccess{Simpan riwayat berhasil?}
+        UserLoggedIn{User login?}
+        SaveHistory[Panggil RiwayatRepository.saveSession]
+        SaveSuccess{Riwayat tersimpan?}
         GoResult[Arahkan ke ResultScreen]
-        ContinueOffline[Tampilkan result meski save gagal/offline]
+        ContinueWithoutSave[Lanjut tampilkan hasil tanpa menyimpan]
+    end
+    subgraph Auth["Firebase Authentication"]
+        ReadCurrentUser[Baca currentUser]
     end
     subgraph DB["Firebase Firestore"]
         WriteHistory[Simpan dokumen riwayatLatihan]
     end
 
-    Start --> FinishWorkout --> StopStream --> StreamStopped
-    StreamStopped -->|Tidak| ContinueOffline --> GoResult --> SeeResult --> End([Selesai])
-    StreamStopped -->|Ya| StopStopwatch --> BuildSession --> HasReps
-    HasReps -->|Tidak| EstimateCalories
-    HasReps -->|Ya| EstimateCalories
-    EstimateCalories --> CheckUser
-    CheckUser -->|Tidak| GoResult --> SeeResult --> End
-    CheckUser -->|Ya| SaveSession --> WriteHistory --> SaveSuccess
-    SaveSuccess -->|Ya| GoResult --> SeeResult --> End
-    SaveSuccess -->|Tidak| ContinueOffline --> GoResult --> SeeResult --> End
+    Start --> TapFinish --> StopStream --> StreamStopped
+    StreamStopped -->|Tidak| ContinueWithoutSave --> GoResult --> ViewResult --> End([Selesai])
+    StreamStopped -->|Ya| StopTimer --> BuildSession --> EstimateCalories --> ReadCurrentUser --> UserLoggedIn
+    UserLoggedIn -->|Tidak| GoResult --> ViewResult --> End
+    UserLoggedIn -->|Ya| SaveHistory --> WriteHistory --> SaveSuccess
+    SaveSuccess -->|Ya| GoResult --> ViewResult --> End
+    SaveSuccess -->|Tidak| ContinueWithoutSave --> GoResult --> ViewResult --> End
 ```
 
 ### 2.11 Activity Diagram - Melihat Riwayat Latihan
@@ -453,21 +471,21 @@ flowchart TD
     Start([Mulai])
     subgraph User["Pengguna"]
         OpenHistory[Buka HistoryScreen]
-        SelectHistory[Pilih salah satu riwayat]
-        ViewDetail[Lihat detail riwayat]
+        SelectHistory[Pilih riwayat latihan]
+        ViewHistoryDetail[Lihat detail riwayat]
         RetryLoad[Muat ulang riwayat]
     end
     subgraph App["Aplikasi Flutter Kinetra"]
         WatchHistory[Watch historyProvider]
         HistoryState{Status data riwayat?}
         RenderLoading[Tampilkan loading]
-        RenderHistory[Tampilkan daftar riwayat]
+        RenderList[Tampilkan daftar riwayat]
         HistoryEmpty{Riwayat kosong?}
         RenderEmpty[Tampilkan state kosong]
         NavigateDetail[Navigasi ke HistoryDetailScreen]
-        LoadHistoryDetail[Ambil detail riwayat]
+        LoadDetail[Ambil detail riwayat]
         DetailFound{Detail ditemukan?}
-        RenderDetail[Tampilkan detail]
+        RenderDetail[Tampilkan detail riwayat]
         ShowError[Tampilkan error]
     end
     subgraph DB["Firebase Firestore"]
@@ -480,47 +498,9 @@ flowchart TD
     HistoryState -->|Error| ShowError --> RetryLoad --> WatchHistory
     HistoryState -->|Data| HistoryEmpty
     HistoryEmpty -->|Ya| RenderEmpty --> End([Selesai])
-    HistoryEmpty -->|Tidak| RenderHistory --> SelectHistory --> NavigateDetail --> LoadHistoryDetail --> ReadHistoryDoc --> DetailFound
+    HistoryEmpty -->|Tidak| RenderList --> SelectHistory --> NavigateDetail --> LoadDetail --> ReadHistoryDoc --> DetailFound
     DetailFound -->|Tidak| ShowError --> End
-    DetailFound -->|Ya| RenderDetail --> ViewDetail --> End
-```
-
-### 2.12 Activity Diagram - Melihat Profil
-
-```mermaid
-flowchart TD
-    Start([Mulai])
-    subgraph User["Pengguna"]
-        OpenProfile[Buka ProfileScreen]
-        ViewProfile[Lihat nama, email, dan biodata]
-        GoBiodata[Menuju BiodataScreen untuk melengkapi data]
-    end
-    subgraph App["Aplikasi Flutter Kinetra"]
-        HasCurrentUser{currentUser tersedia?}
-        WatchCurrentUser[Watch currentUserDocProvider]
-        UserDocState{Dokumen user tersedia?}
-        WatchBiodata[Watch biodataProvider]
-        BiodataState{Biodata tersedia?}
-        RenderProfile[Tampilkan profil lengkap]
-        RenderPartial[Tampilkan profil tanpa biodata]
-        RedirectLogin[Arahkan ke LoginScreen]
-        ShowError[Tampilkan error]
-    end
-    subgraph Auth["Firebase Authentication"]
-        ProvideCurrentUser[Menyediakan currentUser UID]
-    end
-    subgraph DB["Firebase Firestore"]
-        ReadUser[Baca dokumen users]
-        ReadBiodata[Baca dokumen biodata]
-    end
-
-    Start --> OpenProfile --> ProvideCurrentUser --> HasCurrentUser
-    HasCurrentUser -->|Tidak| RedirectLogin --> End([Selesai])
-    HasCurrentUser -->|Ya| WatchCurrentUser --> ReadUser --> UserDocState
-    UserDocState -->|Tidak| ShowError --> End
-    UserDocState -->|Ya| WatchBiodata --> ReadBiodata --> BiodataState
-    BiodataState -->|Tidak| RenderPartial --> GoBiodata --> End
-    BiodataState -->|Ya| RenderProfile --> ViewProfile --> End
+    DetailFound -->|Ya| RenderDetail --> ViewHistoryDetail --> End
 ```
 
 ## 3. Class Diagram
@@ -829,50 +809,9 @@ classDiagram
 
 ## 4. Sequence Diagram
 
-Sequence diagram berikut dibuat rinci per alur turunan dari use case inti. Diagram memakai blok `alt`, `else`, `opt`, dan `loop` untuk memperlihatkan detail kondisi sukses/gagal, data kosong, proses berulang, dan percabangan sistem.
+Sequence Diagram berikut disesuaikan dengan 11 use case pada Use Case Diagram. Diagram memakai blok `alt`, `else`, `opt`, dan `loop` untuk memperlihatkan kondisi sukses/gagal, data kosong, proses berulang, dan percabangan sistem.
 
-### 4.1 Sequence Diagram - Registrasi Akun
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User as Pengguna
-    participant Register as RegisterScreen
-    participant AuthRepo as AuthRepositoryImpl
-    participant FirebaseAuth as Firebase Authentication
-    participant Firestore as Firebase Firestore
-    participant Router as GoRouter
-
-    User->>Register: Isi nama, email, password
-    User->>Register: Tekan Register
-    Register->>Register: Validasi input
-    alt Input tidak valid
-        Register-->>User: Tampilkan error validasi
-    else Input valid
-        Register->>AuthRepo: signUp(nama, email, password)
-        AuthRepo->>FirebaseAuth: createUserWithEmailAndPassword(email, password)
-        alt Firebase Authentication gagal
-            FirebaseAuth-->>AuthRepo: FirebaseAuthException
-            AuthRepo-->>Register: Error registrasi
-            Register-->>User: Tampilkan pesan error
-        else Firebase Authentication berhasil
-            FirebaseAuth-->>AuthRepo: UserCredential(uid)
-            AuthRepo->>Firestore: set users/{uid}
-            alt Firestore gagal menyimpan profile
-                Firestore-->>AuthRepo: Error
-                AuthRepo-->>Register: Error penyimpanan
-                Register-->>User: Tampilkan pesan error
-            else Firestore berhasil
-                Firestore-->>AuthRepo: OK
-                AuthRepo-->>Register: UserEntity
-                Register->>Router: Redirect ke /biodata
-                Router-->>User: Tampilkan BiodataScreen
-            end
-        end
-    end
-```
-
-### 4.2 Sequence Diagram - Login
+### 4.1 Sequence Diagram - Login
 
 ```mermaid
 sequenceDiagram
@@ -892,7 +831,7 @@ sequenceDiagram
     else Input valid
         Login->>AuthRepo: signIn(email, password)
         AuthRepo->>FirebaseAuth: signInWithEmailAndPassword(email, password)
-        alt Kredensial salah / akun tidak ada
+        alt Login gagal
             FirebaseAuth-->>AuthRepo: FirebaseAuthException
             AuthRepo-->>Login: Error login
             Login-->>User: Tampilkan pesan error
@@ -912,6 +851,47 @@ sequenceDiagram
                 Router-->>User: Tampilkan BiodataScreen
             else Biodata sudah lengkap
                 Router-->>User: Tampilkan HomeScreen
+            end
+        end
+    end
+```
+
+### 4.2 Sequence Diagram - Register
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Pengguna
+    participant Register as RegisterScreen
+    participant AuthRepo as AuthRepositoryImpl
+    participant FirebaseAuth as Firebase Authentication
+    participant Firestore as Firebase Firestore
+    participant Router as GoRouter
+
+    User->>Register: Isi nama, email, password
+    User->>Register: Tekan Register
+    Register->>Register: Validasi input
+    alt Input tidak valid
+        Register-->>User: Tampilkan error validasi
+    else Input valid
+        Register->>AuthRepo: signUp(nama, email, password)
+        AuthRepo->>FirebaseAuth: createUserWithEmailAndPassword(email, password)
+        alt Registrasi gagal
+            FirebaseAuth-->>AuthRepo: FirebaseAuthException
+            AuthRepo-->>Register: Error registrasi
+            Register-->>User: Tampilkan pesan error
+        else Registrasi berhasil
+            FirebaseAuth-->>AuthRepo: UserCredential(uid)
+            AuthRepo->>Firestore: set users/{uid}
+            alt Simpan profil gagal
+                Firestore-->>AuthRepo: Error
+                AuthRepo-->>Register: Error penyimpanan profil
+                Register-->>User: Tampilkan pesan error
+            else Profil tersimpan
+                Firestore-->>AuthRepo: OK
+                AuthRepo-->>Register: UserEntity
+                Register->>Router: Redirect ke /biodata
+                Router-->>User: Tampilkan BiodataScreen
             end
         end
     end
@@ -983,7 +963,53 @@ sequenceDiagram
     end
 ```
 
-### 4.5 Sequence Diagram - Melihat Rekomendasi Latihan
+### 4.5 Sequence Diagram - Melihat Profil
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Pengguna
+    participant Profile as ProfileScreen
+    participant FirebaseAuth as Firebase Authentication
+    participant Providers as Riverpod Providers
+    participant UserRepo as UserRepositoryImpl
+    participant BiodataRepo as BiodataRepositoryImpl
+    participant Firestore as Firebase Firestore
+    participant Router as GoRouter
+
+    User->>Profile: Buka ProfileScreen
+    Profile->>FirebaseAuth: currentUser.uid
+    alt User tidak login
+        FirebaseAuth-->>Profile: null
+        Profile->>Router: Redirect ke /login
+    else User login
+        FirebaseAuth-->>Profile: UID pengguna
+        Profile->>Providers: watch currentUserDocProvider
+        Providers->>UserRepo: watchUser(uid)
+        UserRepo->>Firestore: snapshots users/{uid}
+        alt User profile tidak ditemukan
+            Firestore-->>UserRepo: null
+            Providers-->>Profile: Data user kosong
+            Profile-->>User: Tampilkan error profil
+        else User profile ditemukan
+            Firestore-->>UserRepo: UserEntity
+            Profile->>Providers: watch biodataProvider
+            Providers->>BiodataRepo: watchBiodata(uid)
+            BiodataRepo->>Firestore: snapshots biodata where userId
+            alt Biodata belum ada
+                Firestore-->>BiodataRepo: null
+                Providers-->>Profile: UserEntity tanpa biodata
+                Profile-->>User: Tampilkan profil parsial dan CTA lengkapi biodata
+            else Biodata ada
+                Firestore-->>BiodataRepo: BiodataEntity
+                Providers-->>Profile: Data profil lengkap
+                Profile-->>User: Tampilkan profil lengkap
+            end
+        end
+    end
+```
+
+### 4.6 Sequence Diagram - Melihat Rekomendasi Latihan
 
 ```mermaid
 sequenceDiagram
@@ -1020,7 +1046,7 @@ sequenceDiagram
     Home-->>User: Tampilkan rekomendasi
 ```
 
-### 4.6 Sequence Diagram - Melihat Daftar Latihan
+### 4.7 Sequence Diagram - Memilih Latihan
 
 ```mermaid
 sequenceDiagram
@@ -1033,10 +1059,10 @@ sequenceDiagram
     participant LocalSeed as LocalLatihanSeed
     participant Router as GoRouter
 
-    User->>WorkoutList: Buka daftar latihan
-    WorkoutList->>Providers: watch latihanListProvider
-    Providers->>LatihanRepo: watchAllActive()
-    LatihanRepo->>Firestore: snapshots latihan where isActive true
+    User->>WorkoutList: Buka daftar/rekomendasi latihan
+    WorkoutList->>Providers: watch latihanListProvider atau recommendationProvider
+    Providers->>LatihanRepo: watchAllActive() atau watchByTarget()
+    LatihanRepo->>Firestore: snapshots latihan
     alt Loading
         Providers-->>WorkoutList: AsyncLoading
         WorkoutList-->>User: Tampilkan loading
@@ -1047,17 +1073,15 @@ sequenceDiagram
         Providers-->>WorkoutList: Data fallback
     else Data tersedia
         Firestore-->>LatihanRepo: List LatihanEntity
-        LatihanRepo-->>Providers: List latihan aktif
+        LatihanRepo-->>Providers: List latihan
     end
     Providers-->>WorkoutList: AsyncValue<List<LatihanEntity>>
-    WorkoutList-->>User: Tampilkan daftar latihan
-    opt Pengguna memilih latihan
-        User->>WorkoutList: Pilih latihan
-        WorkoutList->>Router: push /detection/:latihanId
-    end
+    WorkoutList-->>User: Tampilkan pilihan latihan
+    User->>WorkoutList: Pilih latihan
+    WorkoutList->>Router: push /detection/:latihanId
 ```
 
-### 4.7 Sequence Diagram - Memulai Sesi Workout
+### 4.8 Sequence Diagram - Memulai Latihan
 
 ```mermaid
 sequenceDiagram
@@ -1072,7 +1096,7 @@ sequenceDiagram
     participant MLKit as Google ML Kit PoseDetector
     participant Factory as ExerciseLogicFactory
 
-    User->>Detection: Masuk ke halaman deteksi
+    User->>Detection: Masuk ke halaman latihan
     Detection->>LatihanRepo: getById(latihanId)
     LatihanRepo->>Firestore: query latihan
     alt Latihan tidak ditemukan di Firestore
@@ -1108,7 +1132,7 @@ sequenceDiagram
     end
 ```
 
-### 4.8 Sequence Diagram - Mendeteksi Pose Real-time
+### 4.9 Sequence Diagram - Mendeteksi Gerakan
 
 ```mermaid
 sequenceDiagram
@@ -1118,12 +1142,14 @@ sequenceDiagram
     participant Detection as DetectionScreen
     participant PoseService as PoseDetectorService
     participant MLKit as Google ML Kit PoseDetector
+    participant Logic as ExerciseLogic
+    participant PoseMath as PoseMath
     participant Overlay as PosePainter
 
     User->>Camera: Bergerak di depan kamera
     loop Selama workoutStarted = true
         Camera-->>Detection: CameraImage frame
-        alt PoseService sedang memproses frame lain
+        alt PoseService masih memproses frame lain
             Detection-->>Camera: Skip frame
         else Frame boleh diproses
             Detection->>PoseService: computeRotation(...)
@@ -1137,57 +1163,30 @@ sequenceDiagram
                 alt ML Kit tidak menemukan pose
                     MLKit-->>PoseService: empty list
                     PoseService-->>Detection: null
+                    Detection->>Logic: processPose(null)
+                    Logic-->>Detection: feedback pose tidak terdeteksi
                     Detection-->>User: Minta pengguna atur posisi
                 else ML Kit menemukan pose
                     MLKit-->>PoseService: List<Pose>
                     PoseService-->>Detection: Pose pertama
+                    Detection->>Logic: processPose(pose)
+                    Logic->>PoseMath: isVisible() dan angle()
+                    alt Gerakan valid
+                        PoseMath-->>Logic: Landmark dan sudut valid
+                        Logic-->>Detection: repCount bertambah, feedback positif
+                    else Gerakan belum valid
+                        PoseMath-->>Logic: Landmark/sudut belum sesuai
+                        Logic-->>Detection: feedback koreksi gerakan
+                    end
                     Detection->>Overlay: Update pose dan validasi
-                    Overlay-->>User: Render skeleton overlay
+                    Overlay-->>User: Render skeleton, repetisi, dan feedback
                 end
             end
         end
     end
 ```
 
-### 4.9 Sequence Diagram - Menghitung Repetisi
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant MLKit as Google ML Kit PoseDetector
-    participant Detection as DetectionScreen
-    participant Logic as ExerciseLogic
-    participant PoseMath as PoseMath
-    actor User as Pengguna
-
-    MLKit-->>Detection: Pose hasil deteksi
-    Detection->>Logic: processPose(pose)
-    alt Pose null
-        Logic-->>Detection: isPoseValid=false, feedback pose tidak terdeteksi
-        Detection-->>User: Tampilkan feedback perbaiki posisi
-    else Pose tersedia
-        Logic->>PoseMath: isVisible(landmark wajib)
-        alt Landmark tidak lengkap
-            PoseMath-->>Logic: false
-            Logic-->>Detection: isPoseValid=false, feedback pose tidak terdeteksi
-            Detection-->>User: Tampilkan feedback perbaiki posisi
-        else Landmark lengkap
-            PoseMath-->>Logic: true
-            Logic->>PoseMath: angle(titikA, titikB, titikC)
-            PoseMath-->>Logic: Sudut gerakan
-            Logic->>Logic: Deteksi fase up/down atau standing/squatting
-            alt Fase belum membentuk repetisi valid
-                Logic-->>Detection: status dan feedback diperbarui
-            else Fase valid dan cooldown terpenuhi
-                Logic->>Logic: repCount++
-                Logic-->>Detection: repCount, feedback, isPoseValid
-            end
-            Detection-->>User: Tampilkan repetisi dan feedback
-        end
-    end
-```
-
-### 4.10 Sequence Diagram - Menyimpan Riwayat Latihan
+### 4.10 Sequence Diagram - Melihat Hasil Latihan
 
 ```mermaid
 sequenceDiagram
@@ -1206,7 +1205,7 @@ sequenceDiagram
     Detection->>Camera: stopImageStream()
     alt Stream gagal berhenti
         Camera-->>Detection: Error
-        Detection-->>User: Tetap lanjut ke hasil dengan cleanup terbaik
+        Detection-->>User: Cleanup terbaik dan lanjut ke hasil
     else Stream berhenti
         Camera-->>Detection: OK
     end
@@ -1232,7 +1231,7 @@ sequenceDiagram
             Detection->>Router: pushReplacement(/result, session)
         end
     end
-    Router->>Result: Tampilkan hasil
+    Router->>Result: Tampilkan ResultScreen
     Result-->>User: Repetisi, durasi, kalori, feedback
 ```
 
@@ -1280,52 +1279,6 @@ sequenceDiagram
                 Firestore-->>RiwayatRepo: RiwayatEntity
                 RiwayatRepo-->>Detail: Detail riwayat
                 Detail-->>User: Tampilkan detail
-            end
-        end
-    end
-```
-
-### 4.12 Sequence Diagram - Melihat Profil
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User as Pengguna
-    participant Profile as ProfileScreen
-    participant FirebaseAuth as Firebase Authentication
-    participant Providers as Riverpod Providers
-    participant UserRepo as UserRepositoryImpl
-    participant BiodataRepo as BiodataRepositoryImpl
-    participant Firestore as Firebase Firestore
-    participant Router as GoRouter
-
-    User->>Profile: Buka ProfileScreen
-    Profile->>FirebaseAuth: currentUser.uid
-    alt User tidak login
-        FirebaseAuth-->>Profile: null
-        Profile->>Router: Redirect ke /login
-    else User login
-        FirebaseAuth-->>Profile: UID pengguna
-        Profile->>Providers: watch currentUserDocProvider
-        Providers->>UserRepo: watchUser(uid)
-        UserRepo->>Firestore: snapshots users/{uid}
-        alt User profile tidak ditemukan
-            Firestore-->>UserRepo: null
-            Providers-->>Profile: Data user kosong
-            Profile-->>User: Tampilkan error profil
-        else User profile ditemukan
-            Firestore-->>UserRepo: UserEntity
-            Profile->>Providers: watch biodataProvider
-            Providers->>BiodataRepo: watchBiodata(uid)
-            BiodataRepo->>Firestore: snapshots biodata where userId
-            alt Biodata belum ada
-                Firestore-->>BiodataRepo: null
-                Providers-->>Profile: UserEntity tanpa biodata
-                Profile-->>User: Tampilkan profil parsial dan CTA lengkapi biodata
-            else Biodata ada
-                Firestore-->>BiodataRepo: BiodataEntity
-                Providers-->>Profile: Data profil lengkap
-                Profile-->>User: Tampilkan profil lengkap
             end
         end
     end

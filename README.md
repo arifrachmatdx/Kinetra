@@ -59,4 +59,4 @@ flutter run
 
 ## Dokumentasi
 
-- [Diagram UML](docs/uml.md) — use case inti, activity rinci dengan decision node, class, dan sequence rinci dengan alternatif alur, termasuk integrasi ML Kit, Firebase Authentication, dan Firebase Firestore.
+- [Diagram UML](docs/uml.md) — 11 use case utama, activity rinci dengan decision node, class, dan sequence rinci dengan alternatif alur, termasuk integrasi ML Kit, Firebase Authentication, dan Firebase Firestore.
