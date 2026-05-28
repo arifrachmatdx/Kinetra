@@ -505,132 +505,30 @@ flowchart TD
 
 ## 3. Class Diagram
 
-Class Diagram berikut dibuat lebih sederhana agar mudah dibaca. Diagram tetap mempertahankan makna inti: data domain pengguna/latihan, repository sebagai penghubung data, proses deteksi gerakan, serta integrasi Firebase dan Google ML Kit.
+Class Diagram berikut dibuat pada level konseptual agar lebih sederhana. Diagram hanya menampilkan class utama dan hubungan besarnya, sedangkan detail field dan method dijelaskan pada struktur data Firestore dan kode program.
 
 ```mermaid
 classDiagram
     direction LR
 
-    class UserEntity {
-        +String userId
-        +String nama
-        +String email
-        +bool isBiodataCompleted
-    }
+    class Pengguna
+    class Biodata
+    class Latihan
+    class RiwayatLatihan
+    class WorkoutDetection
+    class FirebaseService
+    class MLKitService
 
-    class BiodataEntity {
-        +String biodataId
-        +String userId
-        +String jenisKelamin
-        +int usia
-        +TargetLatihan targetLatihan
-    }
-
-    class LatihanEntity {
-        +String latihanId
-        +String namaLatihan
-        +int targetRepetisi
-        +int targetDurasi
-        +String targetLatihan
-    }
-
-    class WorkoutSession {
-        +String sesiId
-        +String latihanId
-        +int repetitions
-        +int durationSeconds
-        +double kaloriEstimasi
-    }
-
-    class RiwayatEntity {
-        +String riwayatId
-        +String userId
-        +String sesiId
-        +int hasilRepetisi
-        +int durasiLatihan
-    }
-
-    class DomainRepositories {
-        <<interface>>
-        AuthRepository
-        UserRepository
-        BiodataRepository
-        LatihanRepository
-        RiwayatRepository
-    }
-
-    class DataRepositories {
-        AuthRepositoryImpl
-        UserRepositoryImpl
-        BiodataRepositoryImpl
-        LatihanRepositoryImpl
-        RiwayatRepositoryImpl
-    }
-
-    class DetectionScreen {
-        +latihanId
-        -beginWorkout()
-        -finishWorkout()
-    }
-
-    class CameraService {
-        +initialize()
-        +startImageStream()
-        +stopImageStream()
-    }
-
-    class PoseDetectorService {
-        +initialize()
-        +processCameraImage()
-        +dispose()
-    }
-
-    class ExerciseLogic {
-        <<interface>>
-        +repCount
-        +feedback
-        +processPose()
-        +reset()
-    }
-
-    class ExerciseLogicFactory {
-        +fromLatihanId()
-    }
-
-    class FirebaseAuth {
-        <<external>>
-    }
-
-    class FirebaseFirestore {
-        <<external>>
-    }
-
-    class GoogleMLKitPoseDetector {
-        <<external>>
-    }
-
-    UserEntity "1" --> "0..1" BiodataEntity : memiliki
-    UserEntity "1" --> "0..*" RiwayatEntity : memiliki
-    LatihanEntity "1" --> "0..*" WorkoutSession : dipilih pada
-    WorkoutSession "1" --> "0..1" RiwayatEntity : disimpan sebagai
-
-    DataRepositories ..|> DomainRepositories : implementasi
-    DataRepositories --> FirebaseAuth : autentikasi
-    DataRepositories --> FirebaseFirestore : baca/tulis data
-    DataRepositories --> UserEntity
-    DataRepositories --> BiodataEntity
-    DataRepositories --> LatihanEntity
-    DataRepositories --> RiwayatEntity
-
-    DetectionScreen --> LatihanEntity : memuat latihan
-    DetectionScreen --> CameraService : streaming kamera
-    DetectionScreen --> PoseDetectorService : deteksi pose
-    DetectionScreen --> ExerciseLogic : hitung gerakan
-    DetectionScreen --> WorkoutSession : membuat hasil sesi
-    DetectionScreen --> DataRepositories : simpan riwayat
-
-    PoseDetectorService --> GoogleMLKitPoseDetector : proses pose
-    ExerciseLogicFactory --> ExerciseLogic : memilih strategi
+    Pengguna "1" --> "0..1" Biodata : memiliki
+    Pengguna "1" --> "0..*" RiwayatLatihan : memiliki
+    Pengguna --> Latihan : memilih
+    Latihan --> WorkoutDetection : digunakan pada
+    WorkoutDetection --> MLKitService : mendeteksi gerakan
+    WorkoutDetection --> RiwayatLatihan : menghasilkan
+    FirebaseService --> Pengguna : autentikasi
+    FirebaseService --> Biodata : simpan/baca
+    FirebaseService --> Latihan : baca katalog
+    FirebaseService --> RiwayatLatihan : simpan/baca
 ```
 
 ## 4. Sequence Diagram
