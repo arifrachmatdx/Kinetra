@@ -56,3 +56,7 @@ flutter run
 - `lib/data/` — implementasi Firestore
 - `lib/logic/` — counter repetisi per latihan
 - `lib/services/` — kamera & pose detector
+
+## Dokumentasi
+
+- [Diagram UML](docs/uml.md) — component, class, sequence, activity, deployment, dan use-case diagram proyek.
