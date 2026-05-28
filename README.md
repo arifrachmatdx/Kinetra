@@ -56,3 +56,7 @@ flutter run
 - `lib/data/` — implementasi Firestore
 - `lib/logic/` — counter repetisi per latihan
 - `lib/services/` — kamera & pose detector
+
+## Dokumentasi
+
+- [Diagram UML](docs/uml.md) — 11 use case utama, activity rinci dengan decision node, class, dan sequence rinci dengan alternatif alur, termasuk integrasi ML Kit, Firebase Authentication, dan Firebase Firestore.
