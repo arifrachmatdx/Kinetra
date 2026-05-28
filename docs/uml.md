@@ -505,7 +505,7 @@ flowchart TD
 
 ## 3. Class Diagram
 
-Class Diagram berikut memakai nama class, atribut, dan fungsi yang sesuai dengan kode proyek. Diagram tetap dibuat ringkas dengan hanya menampilkan bagian yang paling penting.
+Class Diagram berikut dibuat sederhana dengan konsep utama saja, tetapi tetap memakai nama class, atribut, dan fungsi yang sesuai dengan kode proyek.
 
 ```mermaid
 classDiagram
@@ -521,78 +521,36 @@ classDiagram
     class BiodataEntity {
         +String biodataId
         +String userId
-        +String jenisKelamin
-        +int usia
         +TargetLatihan targetLatihan
-        +DateTime updatedAt
     }
 
     class LatihanEntity {
         +String latihanId
         +String namaLatihan
-        +String kategoriLatihan
-        +String deskripsi
         +int targetRepetisi
         +int targetDurasi
-        +String targetLatihan
-        +bool isActive
+    }
+
+    class WorkoutSession {
+        +String sesiId
+        +String latihanId
+        +int repetitions
+        +int durationSeconds
+        +double kaloriEstimasi
     }
 
     class RiwayatEntity {
         +String riwayatId
         +String userId
         +String sesiId
-        +DateTime tanggalLatihan
-        +String namaLatihan
         +int hasilRepetisi
         +int durasiLatihan
-        +double? kaloriEstimasi
-        +String? feedbackAkhir
-    }
-
-    class WorkoutSession {
-        +String sesiId
-        +String latihanId
-        +String namaLatihan
-        +int repetitions
-        +int durationSeconds
-        +String feedbackAkhir
-        +double kaloriEstimasi
     }
 
     class AuthRepository {
-        <<interface>>
-        +Stream<User?> authStateChanges()
-        +User? currentUser
-        +Future<UserEntity> signIn(String email, String password)
-        +Future<UserEntity> signUp(String nama, String email, String password)
-        +Future<void> signOut()
-    }
-
-    class UserRepository {
-        <<interface>>
-        +Stream<UserEntity?> watchUser(String userId)
-        +Future<UserEntity?> getUser(String userId)
-    }
-
-    class BiodataRepository {
-        <<interface>>
-        +Stream<BiodataEntity?> watchBiodata(String userId)
-        +Future<void> saveBiodata(String userId, String jenisKelamin, int usia, TargetLatihan targetLatihan)
-    }
-
-    class LatihanRepository {
-        <<interface>>
-        +Stream<List<LatihanEntity>> watchAllActive()
-        +Stream<List<LatihanEntity>> watchByTarget(String targetLatihan)
-        +Future<LatihanEntity?> getById(String latihanId)
-    }
-
-    class RiwayatRepository {
-        <<interface>>
-        +Stream<List<RiwayatEntity>> watchByUser(String userId)
-        +Future<RiwayatEntity?> getById(String riwayatId)
-        +Future<void> saveSession(String userId, WorkoutSession session)
+        +signIn(String email, String password)
+        +signUp(String nama, String email, String password)
+        +signOut()
     }
 
     class DetectionScreen {
@@ -601,50 +559,35 @@ classDiagram
         -_finishWorkout()
     }
 
-    class CameraService {
-        +CameraController? controller
-        +bool isInitialized
-        +bool isFrontCamera
-        +int sensorOrientation
-        +Future<void> initialize(bool useFrontCamera)
-        +Future<void> startImageStream(Function onImage)
-        +Future<void> stopImageStream()
-        +Future<void> dispose()
+    class ExerciseLogic {
+        +int repCount
+        +String feedback
+        +bool isPoseValid
+        +processPose(Pose? pose)
+        +reset()
     }
 
     class PoseDetectorService {
         +bool isProcessing
-        +Future<void> initialize()
-        +Future<Pose?> processCameraImage(CameraImage image, int rotation, bool isFrontCamera)
-        +Future<void> dispose()
+        +initialize()
+        +processCameraImage(CameraImage image, int rotation, bool isFrontCamera)
+        +dispose()
     }
 
-    class ExerciseLogic {
-        <<interface>>
-        +int repCount
-        +String feedback
-        +String status
-        +bool isPoseValid
-        +void processPose(Pose? pose)
-        +void reset()
+    class RiwayatRepository {
+        +watchByUser(String userId)
+        +saveSession(String userId, WorkoutSession session)
     }
 
+    AuthRepository --> UserEntity : autentikasi
     UserEntity "1" --> "0..1" BiodataEntity : memiliki
     UserEntity "1" --> "0..*" RiwayatEntity : memiliki
-    LatihanEntity "1" --> "0..*" WorkoutSession : dipilih pada
-    WorkoutSession "1" --> "0..1" RiwayatEntity : disimpan sebagai
-
-    DetectionScreen --> CameraService : streaming kamera
+    LatihanEntity --> DetectionScreen : dipilih untuk latihan
     DetectionScreen --> PoseDetectorService : deteksi pose
-    DetectionScreen --> ExerciseLogic : hitung gerakan
+    DetectionScreen --> ExerciseLogic : proses gerakan
     DetectionScreen --> WorkoutSession : membuat hasil sesi
-    DetectionScreen --> LatihanRepository : memuat latihan
-    DetectionScreen --> RiwayatRepository : simpan riwayat
-    AuthRepository --> UserEntity : autentikasi
-    UserRepository --> UserEntity : data profil
-    BiodataRepository --> BiodataEntity : data biodata
-    LatihanRepository --> LatihanEntity : data latihan
-    RiwayatRepository --> RiwayatEntity : data riwayat
+    WorkoutSession --> RiwayatEntity : disimpan sebagai
+    RiwayatRepository --> RiwayatEntity : simpan/baca riwayat
 ```
 
 ## 4. Sequence Diagram
