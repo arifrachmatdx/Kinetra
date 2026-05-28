@@ -11,6 +11,8 @@ Diagram dibuat dengan Mermaid agar dapat dirender langsung di Markdown. Selain p
 
 ## 1. Use Case Diagram
 
+Use Case Diagram dibuat ringkas untuk menampilkan fungsi inti sistem. Detail seperti validasi, error handling, fallback data, dan percabangan teknis dijelaskan pada Activity Diagram dan Sequence Diagram.
+
 ```mermaid
 flowchart LR
     Pengguna["<<actor>>\nPengguna"]
@@ -19,64 +21,39 @@ flowchart LR
     Firestore["<<actor>>\nFirebase Firestore"]
 
     subgraph Sistem["Sistem Kinetra"]
-        UCRegister(("Registrasi Akun"))
-        UCLogin(("Login"))
-        UCLogout(("Logout"))
-        UCCompleteBiodata(("Mengisi Biodata"))
-        UCRecommendation(("Melihat Rekomendasi Latihan"))
-        UCBrowseWorkout(("Melihat Daftar Latihan"))
-        UCStartWorkout(("Memulai Sesi Workout"))
-        UCPoseDetection(("Mendeteksi Pose Real-time"))
-        UCCountRep(("Menghitung Repetisi"))
-        UCSaveHistory(("Menyimpan Riwayat Latihan"))
-        UCViewHistory(("Melihat Riwayat Latihan"))
-        UCViewProfile(("Melihat Profil"))
-        UCValidateInput(("Validasi Input"))
-        UCHandleAuthError(("Menangani Error Autentikasi"))
-        UCUseLocalSeed(("Menggunakan Fallback LocalLatihanSeed"))
-        UCShowResult(("Menampilkan Hasil Latihan"))
+        UCAuth(("Autentikasi Akun"))
+        UCBiodata(("Mengisi Biodata"))
+        UCWorkoutCatalog(("Melihat dan Memilih Latihan"))
+        UCWorkoutSession(("Menjalankan Sesi Workout"))
+        UCResult(("Melihat Hasil Latihan"))
+        UCHistory(("Melihat Riwayat Latihan"))
+        UCProfile(("Melihat Profil"))
     end
 
-    Pengguna --> UCRegister
-    Pengguna --> UCLogin
-    Pengguna --> UCLogout
-    Pengguna --> UCCompleteBiodata
-    Pengguna --> UCRecommendation
-    Pengguna --> UCBrowseWorkout
-    Pengguna --> UCStartWorkout
-    Pengguna --> UCViewHistory
-    Pengguna --> UCViewProfile
+    Pengguna --> UCAuth
+    Pengguna --> UCBiodata
+    Pengguna --> UCWorkoutCatalog
+    Pengguna --> UCWorkoutSession
+    Pengguna --> UCResult
+    Pengguna --> UCHistory
+    Pengguna --> UCProfile
 
-    FirebaseAuth --> UCRegister
-    FirebaseAuth --> UCLogin
-    FirebaseAuth --> UCLogout
+    FirebaseAuth --> UCAuth
+    Firestore --> UCBiodata
+    Firestore --> UCWorkoutCatalog
+    Firestore --> UCWorkoutSession
+    Firestore --> UCHistory
+    Firestore --> UCProfile
+    MLKit --> UCWorkoutSession
 
-    Firestore --> UCCompleteBiodata
-    Firestore --> UCRecommendation
-    Firestore --> UCBrowseWorkout
-    Firestore --> UCSaveHistory
-    Firestore --> UCViewHistory
-    Firestore --> UCViewProfile
-
-    MLKit --> UCPoseDetection
-
-    UCRegister -. include .-> UCValidateInput
-    UCLogin -. include .-> UCValidateInput
-    UCCompleteBiodata -. include .-> UCValidateInput
-    UCRegister -. extend .-> UCHandleAuthError
-    UCLogin -. extend .-> UCHandleAuthError
-    UCRecommendation -. extend .-> UCUseLocalSeed
-    UCBrowseWorkout -. extend .-> UCUseLocalSeed
-    UCStartWorkout -. include .-> UCPoseDetection
-    UCPoseDetection -. include .-> UCCountRep
-    UCStartWorkout -. include .-> UCSaveHistory
-    UCSaveHistory -. include .-> UCShowResult
-    UCCompleteBiodata -. enables .-> UCRecommendation
+    UCWorkoutCatalog --> UCWorkoutSession
+    UCWorkoutSession --> UCResult
+    UCResult --> UCHistory
 ```
 
 ## 2. Activity Diagram
 
-Activity diagram berikut dipecah per use case agar setiap kebutuhan pengguna memiliki alur proses sendiri. Decision node ditulis dengan bentuk diamond `{...}` untuk memperjelas kondisi berhasil/gagal, data tersedia/tidak tersedia, dan loop proses yang terjadi.
+Activity diagram berikut tetap dibuat rinci per alur turunan dari use case inti agar proses sistem mudah ditelusuri. Decision node ditulis dengan bentuk diamond `{...}` untuk memperjelas kondisi berhasil/gagal, data tersedia/tidak tersedia, dan loop proses yang terjadi.
 
 ### 2.1 Activity Diagram - Registrasi Akun
 
@@ -852,7 +829,7 @@ classDiagram
 
 ## 4. Sequence Diagram
 
-Sequence diagram berikut juga dipecah per use case. Diagram memakai blok `alt`, `else`, `opt`, dan `loop` untuk memperlihatkan detail kondisi sukses/gagal, data kosong, proses berulang, dan percabangan sistem.
+Sequence diagram berikut dibuat rinci per alur turunan dari use case inti. Diagram memakai blok `alt`, `else`, `opt`, dan `loop` untuk memperlihatkan detail kondisi sukses/gagal, data kosong, proses berulang, dan percabangan sistem.
 
 ### 4.1 Sequence Diagram - Registrasi Akun
 
