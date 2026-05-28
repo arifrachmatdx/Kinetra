@@ -505,92 +505,146 @@ flowchart TD
 
 ## 3. Class Diagram
 
-Class Diagram berikut tetap dibuat sederhana, tetapi sudah menyertakan variabel dengan tipe data dan fungsi utama pada setiap class inti.
+Class Diagram berikut memakai nama class, atribut, dan fungsi yang sesuai dengan kode proyek. Diagram tetap dibuat ringkas dengan hanya menampilkan bagian yang paling penting.
 
 ```mermaid
 classDiagram
     direction LR
 
-    class Pengguna {
+    class UserEntity {
         +String userId
         +String nama
         +String email
         +bool isBiodataCompleted
-        +login()
-        +register()
-        +logout()
     }
 
-    class Biodata {
+    class BiodataEntity {
         +String biodataId
         +String userId
         +String jenisKelamin
         +int usia
-        +String targetLatihan
-        +simpanBiodata()
+        +TargetLatihan targetLatihan
+        +DateTime updatedAt
     }
 
-    class Latihan {
+    class LatihanEntity {
         +String latihanId
         +String namaLatihan
         +String kategoriLatihan
         +String deskripsi
         +int targetRepetisi
         +int targetDurasi
+        +String targetLatihan
         +bool isActive
-        +getLatihanAktif()
     }
 
-    class RiwayatLatihan {
+    class RiwayatEntity {
         +String riwayatId
         +String userId
         +String sesiId
         +DateTime tanggalLatihan
+        +String namaLatihan
         +int hasilRepetisi
         +int durasiLatihan
-        +double kaloriEstimasi
-        +String feedbackAkhir
-        +simpanRiwayat()
-        +lihatRiwayat()
+        +double? kaloriEstimasi
+        +String? feedbackAkhir
     }
 
-    class WorkoutDetection {
+    class WorkoutSession {
+        +String sesiId
         +String latihanId
-        +int repCount
+        +String namaLatihan
+        +int repetitions
         +int durationSeconds
-        +String feedback
-        +bool isPoseValid
-        +mulaiLatihan()
-        +prosesGerakan()
-        +selesaiLatihan()
+        +String feedbackAkhir
+        +double kaloriEstimasi
     }
 
-    class FirebaseService {
-        +login(email: String, password: String)
-        +register(nama: String, email: String, password: String)
-        +logout()
-        +saveBiodata(biodata: Biodata)
-        +getLatihan()
-        +saveRiwayat(riwayat: RiwayatLatihan)
+    class AuthRepository {
+        <<interface>>
+        +Stream<User?> authStateChanges()
+        +User? currentUser
+        +Future<UserEntity> signIn(String email, String password)
+        +Future<UserEntity> signUp(String nama, String email, String password)
+        +Future<void> signOut()
     }
 
-    class MLKitService {
+    class UserRepository {
+        <<interface>>
+        +Stream<UserEntity?> watchUser(String userId)
+        +Future<UserEntity?> getUser(String userId)
+    }
+
+    class BiodataRepository {
+        <<interface>>
+        +Stream<BiodataEntity?> watchBiodata(String userId)
+        +Future<void> saveBiodata(String userId, String jenisKelamin, int usia, TargetLatihan targetLatihan)
+    }
+
+    class LatihanRepository {
+        <<interface>>
+        +Stream<List<LatihanEntity>> watchAllActive()
+        +Stream<List<LatihanEntity>> watchByTarget(String targetLatihan)
+        +Future<LatihanEntity?> getById(String latihanId)
+    }
+
+    class RiwayatRepository {
+        <<interface>>
+        +Stream<List<RiwayatEntity>> watchByUser(String userId)
+        +Future<RiwayatEntity?> getById(String riwayatId)
+        +Future<void> saveSession(String userId, WorkoutSession session)
+    }
+
+    class DetectionScreen {
+        +String latihanId
+        -_beginWorkout()
+        -_finishWorkout()
+    }
+
+    class CameraService {
+        +CameraController? controller
+        +bool isInitialized
+        +bool isFrontCamera
+        +int sensorOrientation
+        +Future<void> initialize(bool useFrontCamera)
+        +Future<void> startImageStream(Function onImage)
+        +Future<void> stopImageStream()
+        +Future<void> dispose()
+    }
+
+    class PoseDetectorService {
         +bool isProcessing
-        +initialize()
-        +processCameraImage()
-        +dispose()
+        +Future<void> initialize()
+        +Future<Pose?> processCameraImage(CameraImage image, int rotation, bool isFrontCamera)
+        +Future<void> dispose()
     }
 
-    Pengguna "1" --> "0..1" Biodata : memiliki
-    Pengguna "1" --> "0..*" RiwayatLatihan : memiliki
-    Pengguna --> Latihan : memilih
-    Latihan --> WorkoutDetection : digunakan pada
-    WorkoutDetection --> MLKitService : mendeteksi gerakan
-    WorkoutDetection --> RiwayatLatihan : menghasilkan
-    FirebaseService --> Pengguna : autentikasi
-    FirebaseService --> Biodata : simpan/baca
-    FirebaseService --> Latihan : baca katalog
-    FirebaseService --> RiwayatLatihan : simpan/baca
+    class ExerciseLogic {
+        <<interface>>
+        +int repCount
+        +String feedback
+        +String status
+        +bool isPoseValid
+        +void processPose(Pose? pose)
+        +void reset()
+    }
+
+    UserEntity "1" --> "0..1" BiodataEntity : memiliki
+    UserEntity "1" --> "0..*" RiwayatEntity : memiliki
+    LatihanEntity "1" --> "0..*" WorkoutSession : dipilih pada
+    WorkoutSession "1" --> "0..1" RiwayatEntity : disimpan sebagai
+
+    DetectionScreen --> CameraService : streaming kamera
+    DetectionScreen --> PoseDetectorService : deteksi pose
+    DetectionScreen --> ExerciseLogic : hitung gerakan
+    DetectionScreen --> WorkoutSession : membuat hasil sesi
+    DetectionScreen --> LatihanRepository : memuat latihan
+    DetectionScreen --> RiwayatRepository : simpan riwayat
+    AuthRepository --> UserEntity : autentikasi
+    UserRepository --> UserEntity : data profil
+    BiodataRepository --> BiodataEntity : data biodata
+    LatihanRepository --> LatihanEntity : data latihan
+    RiwayatRepository --> RiwayatEntity : data riwayat
 ```
 
 ## 4. Sequence Diagram
